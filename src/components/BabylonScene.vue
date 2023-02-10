@@ -1,25 +1,25 @@
 <script lang="ts">
-import { ref, onMounted } from '@vue/runtime-core';
-import { createScene } from '../scripts/scenes/index';
+import { ref, onMounted } from "@vue/runtime-core";
+import { createScene } from "../scripts/scenes/index";
 
 export default {
-    name: 'BabylonScene',
-    setup() {
-        const bjsCanvas = ref(null);
+  name: "BabylonScene",
+  setup() {
+    const canvasRef = ref(null);
 
-        onMounted(() => {
-            if (bjsCanvas.value) {
-                createScene(bjsCanvas.value);
-            }
-        });
+    onMounted(() => {
+      if (canvasRef.value) {
+        createScene(canvasRef.value);
+      }
+    });
 
-        return {
-            bjsCanvas,
-        };
-    },
+    return {
+      canvasRef,
+    };
+  },
 };
 </script>
 
 <template>
-    <canvas ref="bjsCanvas" width="2400" height="1100" />
+  <canvas ref="canvasRef" width="500" height="500" />
 </template>
