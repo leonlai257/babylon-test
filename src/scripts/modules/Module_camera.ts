@@ -1,5 +1,6 @@
 import * as posedetection from "@tensorflow-models/pose-detection";
 import * as scatter from "scatter-gl";
+import "@mediapipe/pose";
 
 const VIDEO_SIZE = {
   "640 X 480": { width: 640, height: 480 },
@@ -26,6 +27,8 @@ export class Camera {
     this.video = document.getElementById("video");
     this.canvas = document.getElementById("canvas");
     this.ctx = this.canvas.getContext("2d");
+    console.log(this.canvas);
+
     this.scatterGLEl = document.querySelector("#scatter-gl-container");
     this.scatterGL = new scatter.ScatterGL(this.scatterGLEl, {
       rotateOnStart: true,
@@ -68,7 +71,7 @@ export class Camera {
 
     const stream = await navigator.mediaDevices.getUserMedia(videoConfig);
 
-    const camera = new Camera();
+    const camera = new Camera(); 
     camera.video.srcObject = stream;
 
     await new Promise((resolve) => {

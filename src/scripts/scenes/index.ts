@@ -7,13 +7,27 @@ import {
   StandardMaterial,
   Color3,
   HemisphericLight,
+  SceneLoader,
 } from "@babylonjs/core";
+import "babylonjs-loaders";
+// import "@babylonjs/loaders";
 
 import * as poseDetection from "@tensorflow-models/pose-detection";
 import * as tf from "@tensorflow/tfjs-core";
+import "@mediapipe/pose";
 // Register WebGL backend.
 import "@tensorflow/tfjs-backend-webgl";
 import { Camera } from "../modules/Module_camera";
+// import "babylon-vrm-loader";
+// const vrmLoaderScript = document.createElement("script");
+// vrmLoaderScript.src =
+//   "https://cdn.jsdelivr.net/npm/babylon-vrm-loader/dist/index.js";
+// document.head.appendChild(vrmLoaderScript);
+
+import "babylon-vrm-loader";
+import * as Kalidokit from "kalidokit";
+import { Holistic } from "@mediapipe/holistic";
+import { Camera } from "@mediapipe/camera_utils";
 
 let detector, camera, stats;
 let startInferenceTime,
@@ -21,6 +35,22 @@ let startInferenceTime,
 let inferenceTimeSum = 0,
   lastPanelUpdate = 0;
 let rafId;
+
+const loadVRM = async (rootUrl, fileName) => {
+    const result = await SceneLoader.AppendAsync(rootUrl, fileName);
+  
+    const vrmManager = result.metadata.vrmManagers[0];
+    // scene.onBeforeRenderObservable.add(() => {
+    //   vrmManager.update(scene.getEngine().getDeltaTime());
+    // });
+  
+    // vrmManager.rootMesh.addRotation(0, -Math.PI/2, 0);
+  
+    // // Work with BlendShape(MorphTarget)
+    // vrmManager.morphing("Joy", 1.0);
+    console.dir(result);
+    return result;
+  };
 
 const createDetector = async () => {
   const model = poseDetection.SupportedModels.BlazePose;
@@ -120,12 +150,135 @@ async function renderPrediction() {
 const createScene = async (canvas: any) => {
   const engine = new Engine(canvas);
   const scene = new Scene(engine);
+  await SceneLoader.Append(
+    "./assets/",
+    "9155828196308247417.vrm",
+    scene,
+    function (scene) {
+      console.log(scene);
+    }
+  );
 
-  camera = await Camera.setupCamera({ targetFPS: 60, sizeOption: "640 X 480" });
+  vrmLoaderScript.onload = () => {
+    BABYLON.SceneLoader.Append(
+      "https://raw.githubusercontent.com/vrm-c/UniVRM/master/Tests/Models/Alicia_vrm-0.51/",
+      "AliciaSolid_vrm-0.51.vrm",
+      scene,
+      () => {}
+    );
+  };
 
-  detector = await createDetector();
+  const videoElement =
+    document.getElementById('video');
+  const canvasElement =
+    document.getElementById('canvas');
+  const canvasCtx = canvasElement.getContext('2d');
 
-  renderPrediction();
+  const vrm = await loadVRM("/assets/meshes/", "univrm.vrm");
+  const vrmManager = vrm.metadata.vrmManagers[0];
+
+  let holistic = new Holistic({locateFile: (file) => {
+    return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.4.1633559476/${file}`;
+  }});
+
+  holistic.onResults(results=>{
+      // do something with prediction results
+      // landmark names may change depending on TFJS/Mediapipe model version
+      let facelm = results.faceLandmarks;
+      // let poselm = results.poseLandmarks;
+      // let poselm3d = results.ea;
+      let rightHandlm = results.rightHandLandmarks;
+      let leftHandlm = results.leftHandLandmarks;
+
+      let faceRig, poseRig, rightHandRig, leftHandRig;
+
+      if (facelm) {
+        faceRig = Kalidokit.Face.solve(facelm,{runtime:'mediapipe',video: videoElement})
+        console.log(vrmManager.humanoidBone.head)
+        vrmManager.humanoidBone.head.position.x = faceRig.head.normalized.y;
+        vrmManager.humanoidBone.head.position.y = faceRig.head.normalized.x;
+        vrmManager.humanoidBone.head.position.z = faceRig.head.normalized.z;
+      }
+      // if (poselm && poselm3d) {
+      //   poseRig = Kalidokit.Pose.solve(poselm3d,poselm,{runtime:'mediapipe',video: videoElement})
+      // }
+      if (rightHandlm) {
+        rightHandRig = Kalidokit.Hand.solve(rightHandlm,"Right")
+        console.log(rightHandRig);
+        console.log(vrmManager.humanoidBone)
+      }
+      if (leftHandlm) {
+        leftHandRig = Kalidokit.Hand.solve(leftHandlm,"Left")
+      }
+  });
+
+  // use Mediapipe's webcam utils to send video to holistic every frame
+  const trackingCamera = new Camera(videoElement, {
+    onFrame: async () => {
+      await holistic.send({image: videoElement});
+    },
+    width: 640,
+    height: 480
+  });
+  trackingCamera.start();
+
+  //   vrmLoaderScript.onload = () => {
+  //     BABYLON.SceneLoader.Append(
+  //       "https://raw.githubusercontent.com/vrm-c/UniVRM/master/Tests/Models/Alicia_vrm-0.51/",
+  //       "AliciaSolid_vrm-0.51.vrm",
+  //       scene,
+  //       () => {}
+  //     );
+  //   };
+
+  //   var camera = new BABYLON.ArcRotateCamera(
+  //     "camera1",
+  //     -Math.PI / 2,
+  //     Math.PI / 2,
+  //     2,
+  //     new BABYLON.Vector3(0, 1.3, 0),
+  //     scene
+  //   );
+
+  // This targets the camera to scene origin
+  // camera.setTarget(new BABYLON.Vector3(0, 1.5, 0));
+
+  // This attaches the camera to the canvas
+  //   camera.attachControl(canvas, true);
+
+  //   // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
+  //   var light = new BABYLON.DirectionalLight(
+  //     "light",
+  //     new BABYLON.Vector3(0.3, -1, 0.3),
+  //     scene
+  //   );
+
+  //   // Our built-in 'ground' shape.
+  //   var ground = BABYLON.MeshBuilder.CreateGround(
+  //     "ground",
+  //     { width: 6, height: 6 },
+  //     scene
+  //   );
+
+  //   // Update secondary animation
+  //   scene.onBeforeRenderObservable.add(() => {
+  //     vrmManager.update(scene.getEngine().getDeltaTime());
+  //   });
+
+  //   // Model Transformation
+  //   vrmManager.rootMesh.translate(new BABYLON.Vector3(1, 0, 0), 1);
+
+  //   // Work with HumanoidBone
+  //   vrmManager.humanoidBone.leftUpperArm.addRotation(0, 1, 0);
+
+  //   // Work with BlendShape(MorphTarget)
+  //   vrmManager.morphing("Joy", 1.0);
+
+  //   camera = await Camera.setupCamera({ targetFPS: 60, sizeOption: "640 X 480" });
+
+  //   detector = await createDetector();
+
+  //   renderPrediction();
 
   engine.runRenderLoop(() => {
     scene.render();

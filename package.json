@@ -10,8 +10,9 @@
         "type-check": "vue-tsc --noEmit"
     },
     "dependencies": {
-        "@babylonjs/core": "^5.46.0",
-        "@babylonjs/inspector": "^5.46.0",
+        "@babylonjs/core": "4.2.0",
+        "@babylonjs/inspector": "4.2.0",
+        "@babylonjs/loaders": "4.2.0",
         "@mediapipe/pose": "^0.5.1675469404",
         "@tensorflow-models/pose-detection": "^2.0.0",
         "@tensorflow/tfjs-backend-wasm": "^4.0.0",
@@ -19,7 +20,8 @@
         "@tensorflow/tfjs-backend-webgpu": "^0.0.1-alpha.14",
         "@tensorflow/tfjs-converter": "^4.2.0",
         "@tensorflow/tfjs-core": "^4.2.0",
-        "babylonjs-gui": "^5.46.0",
+        "babylon-vrm-loader": "^1.6.0",
+        "babylonjs-loaders": "4.2",
         "pinia": "^2.0.28",
         "scatter-gl": "0.0.8",
         "vue": "^3.2.45",
