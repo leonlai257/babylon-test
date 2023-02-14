@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import BabylonScene from './components/BabylonScene.vue';
-import { ref, onMounted } from '@vue/runtime-core';
-import { createScene } from './scripts/scenes/index';
+import BabylonScene from "./components/BabylonScene.vue";
+import { ref, onMounted } from "@vue/runtime-core";
+import { createScene } from "./scripts/scenes/index";
 
 // const canvasRef = ref(null);
 
@@ -29,7 +29,8 @@ import { createScene } from './scripts/scenes/index';
                             visibility: hidden;
                             width: auto;
                             height: auto;
-                        "></video>
+                        "
+                    ></video>
                 </div>
 
                 <!-- <div id="scatter-gl-container"></div> -->
@@ -104,7 +105,7 @@ nav a:first-of-type {
 
     #canvas-wrapper,
     #scatter-gl-container {
-        top: 0;
+        top: 500px;
         width: 100%;
         height: 100%;
         overflow: hidden;

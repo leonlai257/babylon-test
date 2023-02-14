@@ -1,9 +1,9 @@
 <script lang="ts">
-import { ref, onMounted } from '@vue/runtime-core';
-import { createScene } from '../scripts/scenes/index';
+import { ref, onMounted } from "@vue/runtime-core";
+import { createScene } from "../scripts/scenes/index";
 
 export default {
-    name: 'BabylonScene',
+    name: "BabylonScene",
     setup() {
         const canvasRef = ref(null);
 
@@ -21,5 +21,11 @@ export default {
 </script>
 
 <template>
-    <canvas ref="canvasRef" width="1600" height="900" />
+    <canvas ref="canvasRef" class="canvas" width="1600" height="900" />
 </template>
+
+<style scoped>
+.canvas {
+    top: 500px;
+}
+</style>
