@@ -8,18 +8,21 @@ import {
     Color3,
     HemisphericLight,
     SceneLoader,
+    ArcRotateCamera,
+    PointLight,
 } from '@babylonjs/core';
 
 import * as poseDetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 import '@mediapipe/pose';
 import '@tensorflow/tfjs-backend-webgl';
-// import { Camera } from "../modules/Module_camera";
 
 import 'babylon-vrm-loader';
 import * as Kalidokit from 'kalidokit';
 import { Holistic } from '@mediapipe/holistic';
 import { Camera } from '@mediapipe/camera_utils';
+
+// import { TrackingCamera } from '../modules/Module_CameraTracking';
 
 let detector, camera, stats;
 let startInferenceTime,
@@ -36,7 +39,7 @@ const loadVRM = async (rootUrl, fileName) => {
     //   vrmManager.update(scene.getEngine().getDeltaTime());
     // });
 
-    // vrmManager.rootMesh.addRotation(0, -Math.PI/2, 0);
+    vrmManager.rootMesh.addRotation(0, Math.PI, 0);
 
     // // Work with BlendShape(MorphTarget)
     // vrmManager.morphing("Joy", 1.0);
@@ -143,7 +146,21 @@ const createScene = async (canvas: any) => {
     const engine = new Engine(canvas);
     const scene = new Scene(engine);
 
-    const videoElement = document.getElementById('video');
+    const arcCamera = new ArcRotateCamera(
+        'camera',
+        Math.PI / 2,
+        Math.PI / 2,
+        2,
+        new Vector3(0, 1, 1),
+        scene
+    );
+    scene.addCamera(arcCamera);
+
+    const light = new PointLight('pointLight', new Vector3(1, 10, 1), scene);
+
+    const videoElement: HTMLVideoElement = document.getElementById(
+        'video'
+    ) as HTMLVideoElement;
     const canvasElement = document.getElementById('canvas');
     const canvasCtx = canvasElement.getContext('2d');
 
@@ -172,7 +189,8 @@ const createScene = async (canvas: any) => {
                 runtime: 'mediapipe',
                 video: videoElement,
             });
-            console.log(vrmManager.humanoidBone.head);
+            console.log(faceRig);
+            // console.log(vrmManager.humanoidBone.head);
             vrmManager.humanoidBone.head.position.x = faceRig.head.normalized.y;
             vrmManager.humanoidBone.head.position.y = faceRig.head.normalized.x;
             vrmManager.humanoidBone.head.position.z = faceRig.head.normalized.z;
@@ -200,11 +218,14 @@ const createScene = async (canvas: any) => {
     });
     trackingCamera.start();
 
-    //   camera = await Camera.setupCamera({ targetFPS: 60, sizeOption: "640 X 480" });
+    // camera = await TrackingCamera.setupCamera({
+    //     targetFPS: 60,
+    //     sizeOption: '640 X 480',
+    // });
 
-    //   detector = await createDetector();
+    // detector = await createDetector();
 
-    //   renderPrediction();
+    // renderPrediction();
 
     engine.runRenderLoop(() => {
         scene.render();
