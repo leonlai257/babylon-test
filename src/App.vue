@@ -17,7 +17,8 @@ import { createScene } from './scripts/scenes/index';
         <div class="wrapper">
             <div class="container">
                 <div class="canvas-wrapper">
-                    <canvas ref="canvasRef" width="500" height="500"></canvas>
+                    <BabylonScene />
+                    <!-- <canvas ref="canvasRef" width="500" height="500"></canvas> -->
                     <canvas id="canvas" width="500" height="500"></canvas>
                     <video
                         id="video"
@@ -30,9 +31,9 @@ import { createScene } from './scripts/scenes/index';
                             height: auto;
                         "></video>
                 </div>
+
                 <!-- <div id="scatter-gl-container"></div> -->
             </div>
-            <BabylonScene />
         </div>
     </header>
 </template>
@@ -85,6 +86,8 @@ nav a:first-of-type {
     }
 
     header .wrapper {
+        top: 0;
+        left: 0;
         display: flex;
         place-items: flex-start;
         flex-wrap: wrap;
@@ -101,6 +104,7 @@ nav a:first-of-type {
 
     #canvas-wrapper,
     #scatter-gl-container {
+        top: 0;
         width: 100%;
         height: 100%;
         overflow: hidden;

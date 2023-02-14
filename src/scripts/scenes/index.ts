@@ -1,26 +1,24 @@
 import {
-    Engine,
-    Scene,
-    FreeCamera,
-    Vector3,
-    MeshBuilder,
-    StandardMaterial,
-    Color3,
-    HemisphericLight,
-    SceneLoader,
     ArcRotateCamera,
+    Engine,
     PointLight,
+    Quaternion,
+    Scene,
+    SceneLoader,
+    Vector3,
 } from '@babylonjs/core';
 
-import * as poseDetection from '@tensorflow-models/pose-detection';
-import * as tf from '@tensorflow/tfjs-core';
 import '@mediapipe/pose';
+import * as poseDetection from '@tensorflow-models/pose-detection';
 import '@tensorflow/tfjs-backend-webgl';
 
+import { Camera } from '@mediapipe/camera_utils';
+import { Holistic } from '@mediapipe/holistic';
 import 'babylon-vrm-loader';
 import * as Kalidokit from 'kalidokit';
-import { Holistic } from '@mediapipe/holistic';
-import { Camera } from '@mediapipe/camera_utils';
+import type { VRMManager } from 'babylon-vrm-loader';
+import { Pose } from '@mediapipe/pose';
+import { ResolveRigger } from '../modules/Module_ResolveLandmarks';
 
 // import { TrackingCamera } from '../modules/Module_CameraTracking';
 
@@ -47,101 +45,6 @@ const loadVRM = async (rootUrl, fileName) => {
     return result;
 };
 
-const createDetector = async () => {
-    const model = poseDetection.SupportedModels.BlazePose;
-    const detectorConfig = {
-        runtime: 'tfjs',
-        enableSmoothing: true,
-        modelType: 'full',
-    };
-
-    return poseDetection.createDetector(model, detectorConfig);
-};
-
-function beginEstimatePosesStats() {
-    startInferenceTime = (performance || Date).now();
-}
-
-function endEstimatePosesStats() {
-    const endInferenceTime = (performance || Date).now();
-    inferenceTimeSum += endInferenceTime - startInferenceTime;
-    ++numInferences;
-
-    const panelUpdateMilliseconds = 1000;
-    if (endInferenceTime - lastPanelUpdate >= panelUpdateMilliseconds) {
-        const averageInferenceTime = inferenceTimeSum / numInferences;
-        inferenceTimeSum = 0;
-        numInferences = 0;
-        // stats.customFpsPanel.update(
-        //   1000.0 / averageInferenceTime,
-        //   120 /* maxValue */
-        // );
-        lastPanelUpdate = endInferenceTime;
-    }
-}
-
-async function renderResult() {
-    if (camera.video.readyState < 2) {
-        await new Promise((resolve) => {
-            camera.video.onloadeddata = () => {
-                resolve(video);
-            };
-        });
-    }
-
-    let poses = null;
-
-    // Detector can be null if initialization failed (for example when loading
-    // from a URL that does not exist).
-    if (detector != null) {
-        // FPS only counts the time it takes to finish estimatePoses.
-        beginEstimatePosesStats();
-
-        // Detectors can throw errors, for example when using custom URLs that
-        // contain a model that doesn't provide the expected output.
-        try {
-            poses = await detector.estimatePoses(camera.video, {
-                maxPoses: 1,
-                flipHorizontal: false,
-            });
-        } catch (error) {
-            detector.dispose();
-            detector = null;
-            alert(error);
-        }
-
-        endEstimatePosesStats();
-    }
-
-    camera.drawCtx();
-
-    // The null check makes sure the UI is not in the middle of changing to a
-    // different model. If during model change, the result is from an old model,
-    // which shouldn't be rendered.
-    if (poses && poses.length > 0) {
-        camera.drawResults(poses);
-    }
-}
-
-async function renderPrediction() {
-    window.cancelAnimationFrame(rafId);
-
-    if (detector != null) {
-        detector.dispose();
-    }
-
-    try {
-        detector = await createDetector();
-    } catch (error) {
-        detector = null;
-        alert(error);
-    }
-
-    await renderResult();
-
-    rafId = requestAnimationFrame(renderPrediction);
-}
-
 const createScene = async (canvas: any) => {
     const engine = new Engine(canvas);
     const scene = new Scene(engine);
@@ -161,11 +64,43 @@ const createScene = async (canvas: any) => {
     const videoElement: HTMLVideoElement = document.getElementById(
         'video'
     ) as HTMLVideoElement;
-    const canvasElement = document.getElementById('canvas');
+    const canvasElement = document.getElementById(
+        'canvas'
+    ) as HTMLCanvasElement;
     const canvasCtx = canvasElement.getContext('2d');
 
     const vrm = await loadVRM('/src/assets/', 'test.vrm');
-    const vrmManager = vrm.metadata.vrmManagers[0];
+    const vrmManager: VRMManager = vrm.metadata.vrmManagers[0];
+
+    const resolveRigger = new ResolveRigger();
+
+    const pose = new Pose({
+        locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+        },
+    });
+    pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        enableSegmentation: true,
+        smoothSegmentation: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+    });
+
+    pose.onResults((results) => {
+        let poselm = results.poseLandmarks;
+        let poselm3d = results.poseWorldLandmarks;
+        let poseRig;
+
+        if (poselm && poselm3d) {
+            poseRig = Kalidokit.Pose.solve(poselm3d, poselm, {
+                runtime: 'mediapipe',
+                video: videoElement,
+            });
+            resolveRigger.rigPose(vrmManager, poseRig as Kalidokit.TPose);
+        }
+    });
 
     let holistic = new Holistic({
         locateFile: (file) => {
@@ -174,37 +109,61 @@ const createScene = async (canvas: any) => {
     });
 
     holistic.onResults((results) => {
-        // do something with prediction results
-        // landmark names may change depending on TFJS/Mediapipe model version
-        let facelm = results.faceLandmarks;
-        // let poselm = results.poseLandmarks;
-        // let poselm3d = results.ea;
-        let rightHandlm = results.rightHandLandmarks;
-        let leftHandlm = results.leftHandLandmarks;
+        let faceLandmarks = results.faceLandmarks;
 
-        let faceRig, poseRig, rightHandRig, leftHandRig;
+        let rightHandLandmarks = results.rightHandLandmarks;
+        let leftHandLandmarks = results.leftHandLandmarks;
 
-        if (facelm) {
-            faceRig = Kalidokit.Face.solve(facelm, {
+        let faceRig, rightHandRig, leftHandRig;
+
+        if (faceLandmarks) {
+            faceRig = Kalidokit.Face.solve(faceLandmarks, {
                 runtime: 'mediapipe',
                 video: videoElement,
             });
-            console.log(faceRig);
-            // console.log(vrmManager.humanoidBone.head);
-            vrmManager.humanoidBone.head.position.x = faceRig.head.normalized.y;
-            vrmManager.humanoidBone.head.position.y = faceRig.head.normalized.x;
-            vrmManager.humanoidBone.head.position.z = faceRig.head.normalized.z;
+            // eyes = Kalidokit.Face.stabilizeBlink(
+            //     { r: faceRig?.eye.r as number, l: faceRig?.eye.l as number }, // left and right eye blendshape values
+            //     vrmManager.humanoidBone.head.rotation.y, // head rotation in radians
+            //     {
+            //         enableWink: true, // disables winking
+            //         maxRot: 0.5, // max head rotation in radians before interpolating obscured eyes
+            //     }
+            // );
+            // console.log(eyes);
+            // console.log(vrmManager.humanoidBone);
+            // console.log(faceRig);
+
+            // console.log(faceRig.eye.l, faceRig.eye.r);
+
+            // vrmManager.morphing('Blink_L', faceRig.eye.l);
+            // vrmManager.morphing('Blink_R', faceRig.eye.r);
+
+            /* Loop through faceRig.mouth.shape to find the highest value, then use that key to morph the VRM facial expression */
+            const vowelList = Object.keys(faceRig.mouth.shape);
+            let vowel = { shape: 'A', degree: 0 };
+            for (let i in Object.keys(faceRig.mouth.shape)) {
+                if (faceRig.mouth.shape[vowelList[i]] > vowel.degree) {
+                    vowel.shape = vowelList[i];
+                    vowel.degree = faceRig.mouth.shape[vowelList[i]];
+                }
+            }
+            vrmManager.morphing(vowel.shape, vowel.degree);
+            resolveRigger.rigFace(vrmManager, faceRig as Kalidokit.TFace);
         }
-        // if (poselm && poselm3d) {
-        //   poseRig = Kalidokit.Pose.solve(poselm3d,poselm,{runtime:'mediapipe',video: videoElement})
-        // }
-        if (rightHandlm) {
-            rightHandRig = Kalidokit.Hand.solve(rightHandlm, 'Right');
-            console.log(rightHandRig);
-            console.log(vrmManager.humanoidBone);
+
+        if (leftHandLandmarks) {
+            rightHandRig = Kalidokit.Hand.solve(leftHandLandmarks, 'Right');
+            resolveRigger.rigRightHand(
+                vrmManager,
+                rightHandRig as Kalidokit.THand<Kalidokit.Side>
+            );
         }
-        if (leftHandlm) {
-            leftHandRig = Kalidokit.Hand.solve(leftHandlm, 'Left');
+        if (rightHandLandmarks) {
+            leftHandRig = Kalidokit.Hand.solve(rightHandLandmarks, 'Left');
+            resolveRigger.rigLeftHand(
+                vrmManager,
+                leftHandRig as Kalidokit.THand<Kalidokit.Side>
+            );
         }
     });
 
@@ -212,6 +171,7 @@ const createScene = async (canvas: any) => {
     const trackingCamera = new Camera(videoElement, {
         onFrame: async () => {
             await holistic.send({ image: videoElement });
+            await pose.send({ image: videoElement });
         },
         width: 640,
         height: 480,
