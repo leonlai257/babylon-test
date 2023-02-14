@@ -110,7 +110,7 @@ const createScene = async (canvas: any) => {
 
     holistic.onResults((results) => {
         let faceLandmarks = results.faceLandmarks;
-
+        console.log(faceLandmarks.length);
         let rightHandLandmarks = results.rightHandLandmarks;
         let leftHandLandmarks = results.leftHandLandmarks;
 
@@ -120,28 +120,18 @@ const createScene = async (canvas: any) => {
             faceRig = Kalidokit.Face.solve(faceLandmarks, {
                 runtime: 'mediapipe',
                 video: videoElement,
-            });
-            // eyes = Kalidokit.Face.stabilizeBlink(
-            //     { r: faceRig?.eye.r as number, l: faceRig?.eye.l as number }, // left and right eye blendshape values
-            //     vrmManager.humanoidBone.head.rotation.y, // head rotation in radians
-            //     {
-            //         enableWink: true, // disables winking
-            //         maxRot: 0.5, // max head rotation in radians before interpolating obscured eyes
-            //     }
-            // );
-            // console.log(eyes);
-            // console.log(vrmManager.humanoidBone);
-            // console.log(faceRig);
+                smoothBlink: true,
+                blinkSettings: [1, 1],
+            }) as Kalidokit.TFace;
+            console.log(faceRig.eye.l, faceRig.eye.r);
 
-            // console.log(faceRig.eye.l, faceRig.eye.r);
-
-            // vrmManager.morphing('Blink_L', faceRig.eye.l);
-            // vrmManager.morphing('Blink_R', faceRig.eye.r);
+            vrmManager.morphing('Blink_L', 1 - faceRig.eye.l);
+            vrmManager.morphing('Blink_R', 1 - faceRig.eye.r);
 
             /* Loop through faceRig.mouth.shape to find the highest value, then use that key to morph the VRM facial expression */
             const vowelList = Object.keys(faceRig.mouth.shape);
             let vowel = { shape: 'A', degree: 0 };
-            for (let i in Object.keys(faceRig.mouth.shape)) {
+            for (let i in vowelList) {
                 if (faceRig.mouth.shape[vowelList[i]] > vowel.degree) {
                     vowel.shape = vowelList[i];
                     vowel.degree = faceRig.mouth.shape[vowelList[i]];
@@ -151,6 +141,7 @@ const createScene = async (canvas: any) => {
             resolveRigger.rigFace(vrmManager, faceRig as Kalidokit.TFace);
         }
 
+        // right hand landmarks are mirrored
         if (leftHandLandmarks) {
             rightHandRig = Kalidokit.Hand.solve(leftHandLandmarks, 'Right');
             resolveRigger.rigRightHand(
@@ -158,6 +149,8 @@ const createScene = async (canvas: any) => {
                 rightHandRig as Kalidokit.THand<Kalidokit.Side>
             );
         }
+
+        // left hand landmarks are mirrored
         if (rightHandLandmarks) {
             leftHandRig = Kalidokit.Hand.solve(rightHandLandmarks, 'Left');
             resolveRigger.rigLeftHand(

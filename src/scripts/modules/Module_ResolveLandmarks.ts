@@ -35,9 +35,9 @@ export class ResolveRigger {
         vrmManager: VRMManager,
         rightHandRig: Kalidokit.THand<Kalidokit.Side>
     ) {
-        vrmManager.humanoidBone.rightHand.rotationQuaternion = this.fromEuler(
-            rightHandRig.RightWrist
-        );
+        // vrmManager.humanoidBone.rightHand.rotationQuaternion = this.fromEuler(
+        //     rightHandRig.RightWrist
+        // );
         vrmManager.humanoidBone.rightRingProximal!.rotationQuaternion =
             this.fromEuler(rightHandRig.RightRingProximal);
         vrmManager.humanoidBone.rightRingIntermediate!.rotationQuaternion =
@@ -75,9 +75,9 @@ export class ResolveRigger {
         leftHandRig: Kalidokit.THand<Kalidokit.Side>
     ) {
         // Do the same as right hand
-        vrmManager.humanoidBone.leftHand.rotationQuaternion = this.fromEuler(
-            leftHandRig.LeftWrist
-        );
+        // vrmManager.humanoidBone.leftHand.rotationQuaternion = this.fromEuler(
+        //     leftHandRig.LeftWrist
+        // );
         vrmManager.humanoidBone.leftRingProximal!.rotationQuaternion =
             this.fromEuler(leftHandRig.LeftRingProximal);
         vrmManager.humanoidBone.leftRingIntermediate!.rotationQuaternion =
