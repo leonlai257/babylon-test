@@ -20,17 +20,8 @@ import { calcEyes } from '../modules/Module_EyeOpenCalculate';
 
 const loadVRM = async (rootUrl, fileName) => {
     const result = await SceneLoader.AppendAsync(rootUrl, fileName);
-
     const vrmManager = result.metadata.vrmManagers[0];
-    // scene.onBeforeRenderObservable.add(() => {
-    //   vrmManager.update(scene.getEngine().getDeltaTime());
-    // });
-
     vrmManager.rootMesh.addRotation(0, Math.PI, 0);
-
-    // // Work with BlendShape(MorphTarget)
-    // vrmManager.morphing("Joy", 1.0);
-    console.dir(result);
     return result;
 };
 
