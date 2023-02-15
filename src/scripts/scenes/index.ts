@@ -1,33 +1,22 @@
 import {
     ArcRotateCamera,
     Engine,
-    PointLight,
-    Quaternion,
-    Scene,
+    PointLight, Scene,
     SceneLoader,
-    Vector3,
+    Vector3
 } from '@babylonjs/core';
 
 import '@mediapipe/pose';
-import * as poseDetection from '@tensorflow-models/pose-detection';
 import '@tensorflow/tfjs-backend-webgl';
 
 import { Camera } from '@mediapipe/camera_utils';
 import { Holistic } from '@mediapipe/holistic';
-import 'babylon-vrm-loader';
-import * as Kalidokit from 'kalidokit';
-import type { VRMManager } from 'babylon-vrm-loader';
 import { Pose } from '@mediapipe/pose';
+import 'babylon-vrm-loader';
+import type { VRMManager } from 'babylon-vrm-loader';
+import * as Kalidokit from 'kalidokit';
 import { ResolveRigger } from '../modules/Module_ResolveLandmarks';
-
-// import { TrackingCamera } from '../modules/Module_CameraTracking';
-
-let detector, camera, stats;
-let startInferenceTime,
-    numInferences = 0;
-let inferenceTimeSum = 0,
-    lastPanelUpdate = 0;
-let rafId;
+import { calcEyes } from '../modules/Module_EyeOpenCalculate';
 
 const loadVRM = async (rootUrl, fileName) => {
     const result = await SceneLoader.AppendAsync(rootUrl, fileName);
@@ -110,23 +99,24 @@ const createScene = async (canvas: any) => {
 
     holistic.onResults((results) => {
         let faceLandmarks = results.faceLandmarks;
-        console.log(faceLandmarks.length);
         let rightHandLandmarks = results.rightHandLandmarks;
         let leftHandLandmarks = results.leftHandLandmarks;
 
-        let faceRig, rightHandRig, leftHandRig;
+        let faceRig, eyesRig, rightHandRig, leftHandRig;
 
         if (faceLandmarks) {
             faceRig = Kalidokit.Face.solve(faceLandmarks, {
                 runtime: 'mediapipe',
                 video: videoElement,
                 smoothBlink: true,
-                blinkSettings: [1, 1],
+                blinkSettings: [0.25, 75],
             }) as Kalidokit.TFace;
-            console.log(faceRig.eye.l, faceRig.eye.r);
 
-            vrmManager.morphing('Blink_L', 1 - faceRig.eye.l);
-            vrmManager.morphing('Blink_R', 1 - faceRig.eye.r);
+            eyesRig = calcEyes(faceLandmarks, { high: 0.75, low: 0.25});
+            console.log(eyesRig.l, eyesRig.r);
+
+            vrmManager.morphing('Blink_L',( 1 - eyesRig.l) *6);
+            vrmManager.morphing('Blink_R', (1 - eyesRig.r) *6);
 
             /* Loop through faceRig.mouth.shape to find the highest value, then use that key to morph the VRM facial expression */
             const vowelList = Object.keys(faceRig.mouth.shape);
@@ -170,11 +160,6 @@ const createScene = async (canvas: any) => {
         height: 480,
     });
     trackingCamera.start();
-
-    // camera = await TrackingCamera.setupCamera({
-    //     targetFPS: 60,
-    //     sizeOption: '640 X 480',
-    // });
 
     // detector = await createDetector();
 

@@ -1,5 +1,5 @@
 class Vector {
-    constructor(a, b, c) {
+    constructor(a: number, b: number,c:number) {
         var _a, _b, _c, _d, _e, _f;
         if (Array.isArray(a)) {
             this.x = (_a = a[0]) !== null && _a !== void 0 ? _a : 0;
@@ -35,6 +35,14 @@ class Vector {
     lerp(v, fraction) {
         return v.subtract(this).multiply(fraction).add(this);
     }
+    distance(v, d = 3) {
+        //2D distance
+        if (d === 2)
+            return Math.sqrt(Math.pow(this.x - v.x, 2) + Math.pow(this.y - v.y, 2));
+        //3D distance
+        else
+            return Math.sqrt(Math.pow(this.x - v.x, 2) + Math.pow(this.y - v.y, 2) + Math.pow(this.z - v.z, 2));
+    }
 }
 
 const clamp = (val, min, max) => {
@@ -54,14 +62,6 @@ const points = {
         [LEFT]: [130, 133, 160, 159, 158, 144, 145, 153],
         [RIGHT]: [263, 362, 387, 386, 385, 373, 374, 380],
     },
-    brow: {
-        [LEFT]: [35, 244, 63, 105, 66, 229, 230, 231],
-        [RIGHT]: [265, 464, 293, 334, 296, 449, 450, 451],
-    },
-    pupil: {
-        [LEFT]: [468, 469, 470, 471, 472],
-        [RIGHT]: [473, 474, 475, 476, 477],
-    },
 };
 /**
  * Calculate eye open ratios and remap to 0-1
@@ -71,7 +71,7 @@ const points = {
  * @param {Number} low : ratio at which eye is comsidered closed
  */
 export const getEyeOpen = (
-    lm,
+    lm: {x: number,y: number,z: number}[],
     side = LEFT,
     { high = 0.85, low = 0.55 } = {}
 ) => {
@@ -177,14 +177,7 @@ export const stabilizeBlink = (
  * Calculate Eyes
  * @param {Array} lm : array of results from tfjs or mediapipe
  */
-export const calcEyes = (lm, { high = 0.85, low = 0.55 } = {}) => {
-    //return early if no iris tracking
-    if (lm.length !== 478) {
-        return {
-            l: 0,
-            r: 0,
-        };
-    }
+export const calcEyes = (lm, { high = 0.75, low = 0.25 } = {}) => {
     //open [0,1]
     const leftEyeLid = getEyeOpen(lm, LEFT, { high: high, low: low });
     const rightEyeLid = getEyeOpen(lm, RIGHT, { high: high, low: low });
