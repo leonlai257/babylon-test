@@ -118,15 +118,6 @@ export class TrackingCamera {
         // camera.ctx.translate(camera.video.videoWidth, 0);
         // camera.ctx.scale(-1, 1);
 
-        if (this.scatterGL) {
-            camera.scatterGLEl.style = `width: ${videoWidth}px; height: ${videoHeight}px;`;
-            camera.scatterGL.resize();
-
-            camera.scatterGLEl.style.display = BLAZEPOSE_CONFIG.render3D
-                ? 'inline-block'
-                : 'none';
-        }
-
         return camera;
     }
 

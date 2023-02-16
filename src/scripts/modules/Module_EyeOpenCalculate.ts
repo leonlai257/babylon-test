@@ -1,4 +1,7 @@
 class Vector {
+    x: number;
+    y: number;
+    z: number;
     constructor(a: number, b: number,c:number) {
         var _a, _b, _c, _d, _e, _f;
         if (Array.isArray(a)) {

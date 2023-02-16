@@ -7,6 +7,7 @@ import {
 } from '@babylonjs/core';
 
 import '@mediapipe/pose';
+import * as poseDetection from '@tensorflow-models/pose-detection';
 import '@tensorflow/tfjs-backend-webgl';
 
 import { Camera } from '@mediapipe/camera_utils';
@@ -17,6 +18,7 @@ import type { VRMManager } from 'babylon-vrm-loader';
 import * as Kalidokit from 'kalidokit';
 import { ResolveRigger } from '../modules/Module_ResolveLandmarks';
 import { calcEyes } from '../modules/Module_EyeOpenCalculate';
+
 
 const loadVRM = async (rootUrl, fileName) => {
     const result = await SceneLoader.AppendAsync(rootUrl, fileName);
@@ -53,6 +55,14 @@ const createScene = async (canvas: any) => {
     const vrmManager: VRMManager = vrm.metadata.vrmManagers[0];
 
     const resolveRigger = new ResolveRigger();
+
+    // const model = poseDetection.SupportedModels.BlazePose;
+    // const detector = await poseDetection.createDetector(model, {
+    //     runtime: 'mediapipe',
+    //     modelType: 'full'
+    // });
+    // const poses = detector.estimatePoses(videoElement);
+    // console.log(poses)
 
     const pose = new Pose({
         locateFile: (file) => {
@@ -103,11 +113,10 @@ const createScene = async (canvas: any) => {
                 blinkSettings: [0.25, 75],
             }) as Kalidokit.TFace;
 
-            eyesRig = calcEyes(faceLandmarks, { high: 0.75, low: 0.25});
-            console.log(eyesRig.l, eyesRig.r);
+            eyesRig = calcEyes(faceLandmarks, { high: 1 , low: 0.8}); // could test around low being 0.75 to 0.85
 
-            vrmManager.morphing('Blink_L',( 1 - eyesRig.l) *6);
-            vrmManager.morphing('Blink_R', (1 - eyesRig.r) *6);
+            vrmManager.morphing('Blink_L', 1.0 - eyesRig.l);
+            vrmManager.morphing('Blink_R', 1.0 - eyesRig.r);
 
             /* Loop through faceRig.mouth.shape to find the highest value, then use that key to morph the VRM facial expression */
             const vowelList = Object.keys(faceRig.mouth.shape);
