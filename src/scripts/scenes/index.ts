@@ -18,6 +18,7 @@ import type { VRMManager } from 'babylon-vrm-loader';
 import * as Kalidokit from 'kalidokit';
 import { ResolveRigger } from '../modules/Module_ResolveLandmarks';
 import { calcEyes } from '../modules/Module_EyeOpenCalculate';
+import createWalkAnimationGroup from '../modules/Module_WalkAnimation';
 
 
 const loadVRM = async (rootUrl, fileName) => {
@@ -56,6 +57,8 @@ const createScene = async (canvas: any) => {
 
     const resolveRigger = new ResolveRigger();
 
+    const walkAnimation = createWalkAnimationGroup(vrmManager, scene);
+
     // const model = poseDetection.SupportedModels.BlazePose;
     // const detector = await poseDetection.createDetector(model, {
     //     runtime: 'mediapipe',
@@ -64,16 +67,20 @@ const createScene = async (canvas: any) => {
     // const poses = detector.estimatePoses(videoElement);
     // console.log(poses)
 
+    // detector = await createDetector();
+
+    // renderPrediction();
+
+    walkAnimation.start(true, 1, 0, 60);
+
     const pose = new Pose({
         locateFile: (file) => {
             return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
         },
     });
     pose.setOptions({
-        modelComplexity: 1,
+        modelComplexity: 2,
         smoothLandmarks: true,
-        enableSegmentation: true,
-        smoothSegmentation: true,
         minDetectionConfidence: 0.5,
         minTrackingConfidence: 0.5,
     });
@@ -161,9 +168,7 @@ const createScene = async (canvas: any) => {
     });
     trackingCamera.start();
 
-    // detector = await createDetector();
 
-    // renderPrediction();
 
     engine.runRenderLoop(() => {
         scene.render();
