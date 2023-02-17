@@ -1,3 +1,5 @@
+import type { Landmark } from "@mediapipe/holistic";
+
 class Vector {
     x: number;
     y: number;
@@ -20,25 +22,25 @@ class Vector {
         this.y = b !== null && b !== void 0 ? b : 0;
         this.z = c !== null && c !== void 0 ? c : 0;
     }
-    add(v) {
+    add(v: Vector) {
         if (v instanceof Vector)
             return new Vector(this.x + v.x, this.y + v.y, this.z + v.z);
         else return new Vector(this.x + v, this.y + v, this.z + v);
     }
-    subtract(v) {
+    subtract(v: Vector) {
         if (v instanceof Vector)
             return new Vector(this.x - v.x, this.y - v.y, this.z - v.z);
         else return new Vector(this.x - v, this.y - v, this.z - v);
     }
-    multiply(v) {
+    multiply(v: Vector) {
         if (v instanceof Vector)
             return new Vector(this.x * v.x, this.y * v.y, this.z * v.z);
         else return new Vector(this.x * v, this.y * v, this.z * v);
     }
-    lerp(v, fraction) {
+    lerp(v: Vector, fraction: Vector) {
         return v.subtract(this).multiply(fraction).add(this);
     }
-    distance(v, d = 3) {
+    distance(v: Vector, d = 3) {
         //2D distance
         if (d === 2)
             return Math.sqrt(Math.pow(this.x - v.x, 2) + Math.pow(this.y - v.y, 2));
@@ -48,10 +50,10 @@ class Vector {
     }
 }
 
-const clamp = (val, min, max) => {
+const clamp = (val: number, min: number, max: number) => {
     return Math.max(Math.min(val, max), min);
 };
-const remap = (val, min, max) => {
+const remap = (val: number, min: number, max: number) => {
     //returns min to max -> 0 to 1
     return (clamp(val, min, max) - min) / (max - min);
 };
@@ -106,14 +108,14 @@ export const getEyeOpen = (
  * Calculate eyelid distance ratios based on landmarks on the face
  */
 export const eyeLidRatio = (
-    eyeOuterCorner,
-    eyeInnerCorner,
-    eyeOuterUpperLid,
-    eyeMidUpperLid,
-    eyeInnerUpperLid,
-    eyeOuterLowerLid,
-    eyeMidLowerLid,
-    eyeInnerLowerLid
+    eyeOuterCorner: Landmark,
+    eyeInnerCorner: Landmark,
+    eyeOuterUpperLid: Landmark,
+    eyeMidUpperLid: Landmark,
+    eyeInnerUpperLid: Landmark,
+    eyeOuterLowerLid: Landmark,
+    eyeMidLowerLid: Landmark,
+    eyeInnerLowerLid: Landmark
 ) => {
     eyeOuterCorner = new Vector(eyeOuterCorner);
     eyeInnerCorner = new Vector(eyeInnerCorner);
@@ -134,53 +136,10 @@ export const eyeLidRatio = (
     return ratio;
 };
 /**
- * Calculate pupil position [-1,1]
- * @param {Results} lm : array of results from tfjs or mediapipe
- * @param {Side} side : left or right
- */
-export const stabilizeBlink = (
-    eye,
-    headY,
-    { enableWink = true, maxRot = 0.5 } = {}
-) => {
-    eye.r = clamp(eye.r, 0, 1);
-    eye.l = clamp(eye.l, 0, 1);
-    //difference between each eye
-    const blinkDiff = Math.abs(eye.l - eye.r);
-    //theshold to which difference is considered a wink
-    const blinkThresh = enableWink ? 0.8 : 1.2;
-    //detect when both eyes are closing
-    const isClosing = eye.l < 0.3 && eye.r < 0.3;
-    //detect when both eyes are opening
-    const isOpen = eye.l > 0.6 && eye.r > 0.6;
-    // sets obstructed eye to the opposite eye value
-    if (headY > maxRot) {
-        return { l: eye.r, r: eye.r };
-    }
-    if (headY < -maxRot) {
-        return { l: eye.l, r: eye.l };
-    }
-    // returns either a wink or averaged blink values
-    return {
-        l:
-            blinkDiff >= blinkThresh && !isClosing && !isOpen
-                ? eye.l
-                : eye.r > eye.l
-                ? Vector.lerp(eye.r, eye.l, 0.95)
-                : Vector.lerp(eye.r, eye.l, 0.05),
-        r:
-            blinkDiff >= blinkThresh && !isClosing && !isOpen
-                ? eye.r
-                : eye.r > eye.l
-                ? Vector.lerp(eye.r, eye.l, 0.95)
-                : Vector.lerp(eye.r, eye.l, 0.05),
-    };
-};
-/**
  * Calculate Eyes
  * @param {Array} lm : array of results from tfjs or mediapipe
  */
-export const calcEyes = (lm, { high = 0.75, low = 0.25 } = {}) => {
+export const calcEyes = (lm: Landmark[], { high = 0.75, low = 0.25 } = {}) => {
     //open [0,1]
     const leftEyeLid = getEyeOpen(lm, LEFT, { high: high, low: low });
     const rightEyeLid = getEyeOpen(lm, RIGHT, { high: high, low: low });
