@@ -70,10 +70,14 @@ const createScene = async (canvas: any) => {
     // detector = await createDetector();
 
     // renderPrediction();
-    
-    const walkAnimation = createWalkAnimationGroup(vrmManager, scene);
 
-    walkAnimation.start(true, 1, 0, 60);
+    const rigAnimationFrame = 15;
+    const transformAnimationFrame = 120;
+
+    const walkAnimationRig = createWalkAnimationGroup(vrmManager, scene, "rig", rigAnimationFrame);
+    const walkAnimationTransform = createWalkAnimationGroup(vrmManager, scene, "transform", transformAnimationFrame);
+    walkAnimationRig.start(true, 1, 0, rigAnimationFrame * 4);
+    walkAnimationTransform.start(true, 1, 0, transformAnimationFrame * 4);
 
     const pose = new Pose({
         locateFile: (file) => {
@@ -88,12 +92,12 @@ const createScene = async (canvas: any) => {
     });
 
     pose.onResults((results) => {
-        let poselm = results.poseLandmarks;
-        let poselm3d = results.poseWorldLandmarks;
+        let poseLandmarks = results.poseLandmarks;
+        let poseLandmarks3d = results.poseWorldLandmarks;
         let poseRig;
 
-        if (poselm && poselm3d) {
-            poseRig = Kalidokit.Pose.solve(poselm3d, poselm, {
+        if (poseLandmarks && poseLandmarks3d) {
+            poseRig = Kalidokit.Pose.solve(poseLandmarks3d, poseLandmarks, {
                 runtime: 'mediapipe',
                 video: videoElement,
             });
@@ -118,11 +122,9 @@ const createScene = async (canvas: any) => {
             faceRig = Kalidokit.Face.solve(faceLandmarks, {
                 runtime: 'mediapipe',
                 video: videoElement,
-                smoothBlink: true,
-                blinkSettings: [0.25, 75],
             }) as Kalidokit.TFace;
 
-            eyesRig = calcEyes(faceLandmarks, { high: 1 , low: 0.8}); // could test around low being 0.75 to 0.85
+            eyesRig = calcEyes(faceLandmarks, { high: 1, low: 0.8 }); // could test around low being 0.75 to 0.85
 
             vrmManager.morphing('Blink_L', 1.0 - eyesRig.l);
             vrmManager.morphing('Blink_R', 1.0 - eyesRig.r);
@@ -169,8 +171,6 @@ const createScene = async (canvas: any) => {
         height: 480,
     });
     trackingCamera.start();
-
-
 
     engine.runRenderLoop(() => {
         scene.render();
