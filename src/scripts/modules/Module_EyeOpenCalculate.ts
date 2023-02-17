@@ -12,12 +12,12 @@ class Vector {
             this.z = (_c = a[2]) !== null && _c !== void 0 ? _c : 0;
             return;
         }
-        if (!!a && typeof a === 'object') {
-            this.x = (_d = a.x) !== null && _d !== void 0 ? _d : 0;
-            this.y = (_e = a.y) !== null && _e !== void 0 ? _e : 0;
-            this.z = (_f = a.z) !== null && _f !== void 0 ? _f : 0;
-            return;
-        }
+        // if (!!a && typeof a === 'object') {
+        //     this.x = (_d = a.x) !== null && _d !== void 0 ? _d : 0;
+        //     this.y = (_e = a.y) !== null && _e !== void 0 ? _e : 0;
+        //     this.z = (_f = a.z) !== null && _f !== void 0 ? _f : 0;
+        //     return;
+        // }
         this.x = a !== null && a !== void 0 ? a : 0;
         this.y = b !== null && b !== void 0 ? b : 0;
         this.z = c !== null && c !== void 0 ? c : 0;
@@ -62,7 +62,11 @@ const remap = (val: number, min: number, max: number) => {
  */
 const RIGHT = 'Right';
 const LEFT = 'Left';
-const points = {
+const points: {
+    eye: {
+        [key: string]: [number, number, number, number, number, number, number, number];
+    }
+} = {
     eye: {
         [LEFT]: [130, 133, 160, 159, 158, 144, 145, 153],
         [RIGHT]: [263, 362, 387, 386, 385, 373, 374, 380],
@@ -76,7 +80,7 @@ const points = {
  * @param {Number} low : ratio at which eye is comsidered closed
  */
 export const getEyeOpen = (
-    lm: {x: number,y: number,z: number}[],
+    lm: Vector[],
     side = LEFT,
     { high = 0.85, low = 0.55 } = {}
 ) => {
@@ -139,7 +143,7 @@ export const eyeLidRatio = (
  * Calculate Eyes
  * @param {Array} lm : array of results from tfjs or mediapipe
  */
-export const calcEyes = (lm: Landmark[], { high = 0.75, low = 0.25 } = {}) => {
+export const calcEyes = (lm: Vector[], { high = 0.75, low = 0.25 } = {}) => {
     //open [0,1]
     const leftEyeLid = getEyeOpen(lm, LEFT, { high: high, low: low });
     const rightEyeLid = getEyeOpen(lm, RIGHT, { high: high, low: low });

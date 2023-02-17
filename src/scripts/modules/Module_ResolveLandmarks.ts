@@ -18,9 +18,9 @@ export class ResolveRigger {
     }
 
     rigPose(vrmManager: VRMManager, poseRig: Kalidokit.TPose) {
-        vrmManager.humanoidBone.spine.rotationQuaternion = this.fromEuler(
-            poseRig.Spine
-        );
+        // vrmManager.humanoidBone.spine.rotationQuaternion = this.fromEuler(
+        //     poseRig.Spine
+        // );
         vrmManager.humanoidBone.rightUpperArm.rotationQuaternion =
             this.fromEuler(poseRig.RightUpperArm);
         vrmManager.humanoidBone.rightLowerArm.rotationQuaternion =
