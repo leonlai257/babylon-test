@@ -108,23 +108,23 @@ export const getEyeOpen = (
  * Calculate eyelid distance ratios based on landmarks on the face
  */
 export const eyeLidRatio = (
-    eyeOuterCorner: Landmark,
-    eyeInnerCorner: Landmark,
-    eyeOuterUpperLid: Landmark,
-    eyeMidUpperLid: Landmark,
-    eyeInnerUpperLid: Landmark,
-    eyeOuterLowerLid: Landmark,
-    eyeMidLowerLid: Landmark,
-    eyeInnerLowerLid: Landmark
+    eyeOuterCorner: Vector,
+    eyeInnerCorner: Vector,
+    eyeOuterUpperLid: Vector,
+    eyeMidUpperLid: Vector,
+    eyeInnerUpperLid: Vector,
+    eyeOuterLowerLid: Vector,
+    eyeMidLowerLid: Vector,
+    eyeInnerLowerLid: Vector
 ) => {
-    eyeOuterCorner = new Vector(eyeOuterCorner);
-    eyeInnerCorner = new Vector(eyeInnerCorner);
-    eyeOuterUpperLid = new Vector(eyeOuterUpperLid);
-    eyeMidUpperLid = new Vector(eyeMidUpperLid);
-    eyeInnerUpperLid = new Vector(eyeInnerUpperLid);
-    eyeOuterLowerLid = new Vector(eyeOuterLowerLid);
-    eyeMidLowerLid = new Vector(eyeMidLowerLid);
-    eyeInnerLowerLid = new Vector(eyeInnerLowerLid);
+    eyeOuterCorner = new Vector(eyeOuterCorner.x, eyeOuterCorner.y, eyeOuterCorner.z);
+    eyeInnerCorner = new Vector(eyeInnerCorner.x, eyeInnerCorner.y, eyeInnerCorner.z);
+    eyeOuterUpperLid = new Vector(eyeOuterUpperLid.x, eyeOuterUpperLid.y, eyeOuterUpperLid.z);
+    eyeMidUpperLid = new Vector(eyeMidUpperLid.x, eyeMidUpperLid.y, eyeMidUpperLid.z);
+    eyeInnerUpperLid = new Vector(eyeInnerUpperLid.x, eyeInnerUpperLid.y, eyeInnerUpperLid.z);
+    eyeOuterLowerLid = new Vector(eyeOuterLowerLid.x, eyeOuterLowerLid.y, eyeOuterLowerLid.z);
+    eyeMidLowerLid = new Vector(eyeMidLowerLid.x, eyeMidLowerLid.y, eyeMidLowerLid.z);
+    eyeInnerLowerLid = new Vector(eyeInnerLowerLid.x, eyeInnerLowerLid.y, eyeInnerLowerLid.z);
     //use 2D Distances instead of 3D for less jitter
     const eyeWidth = eyeOuterCorner.distance(eyeInnerCorner, 2);
     const eyeOuterLidDistance = eyeOuterUpperLid.distance(eyeOuterLowerLid, 2);

@@ -1,6 +1,6 @@
 import * as BABYLON from "@babylonjs/core";
 
-function createAnimation(animation: any): BABYLON.Animation {
+function createRigAnimation(animation: any): BABYLON.Animation {
     const anim = new BABYLON.Animation(
         animation.name,
         'rotationQuaternion',
@@ -21,6 +21,8 @@ function createAnimation(animation: any): BABYLON.Animation {
 }
 
 function createWalkAnimationGroup(vrmManager: any, scene: BABYLON.Scene): BABYLON.AnimationGroup {
+    let targetLocationIndex = 0;
+    const loactionList = [{ x: 2, y: 0, z: 0 }, { x: -2, y: 0, z: 0 }];
     const leftUpperLegAnim = {
         name: 'leftUpperLegAnim',
         keys: [
@@ -63,13 +65,17 @@ function createWalkAnimationGroup(vrmManager: any, scene: BABYLON.Scene): BABYLO
     const animationGroup = new BABYLON.AnimationGroup('Walk', scene);
     animationGroup.loopAnimation = true;
     animationGroup.addTargetedAnimation(
-        createAnimation(leftUpperLegAnim),
+        createRigAnimation(leftUpperLegAnim),
         vrmManager.humanoidBone.leftUpperLeg,
     );
     animationGroup.addTargetedAnimation(
-        createAnimation(rightUpperLegAnim),
+        createRigAnimation(rightUpperLegAnim),
         vrmManager.humanoidBone.rightUpperLeg,
     );
+    animationGroup.addTargetedAnimation(
+        new BABYLON.Animation("WalkTransform", "position", 60, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE, false),
+        vrmManager.rootMesh,
+    )
     // animationGroup.addTargetedAnimation(
     //     createAnimation(leftUpperArmAnim),
     //     vrmManager.humanoidBone.leftUpperArm,

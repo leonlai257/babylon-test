@@ -19,6 +19,7 @@ import * as Kalidokit from 'kalidokit';
 import { ResolveRigger } from '../modules/Module_ResolveLandmarks';
 import { calcEyes } from '../modules/Module_EyeOpenCalculate';
 import createWalkAnimationGroup from '../modules/Module_WalkAnimation';
+import createWalkPath from '../modules/Module_WalkManager';
 
 
 const loadVRM = async (rootUrl, fileName) => {
@@ -57,7 +58,6 @@ const createScene = async (canvas: any) => {
 
     const resolveRigger = new ResolveRigger();
 
-    const walkAnimation = createWalkAnimationGroup(vrmManager, scene);
 
     // const model = poseDetection.SupportedModels.BlazePose;
     // const detector = await poseDetection.createDetector(model, {
@@ -70,6 +70,8 @@ const createScene = async (canvas: any) => {
     // detector = await createDetector();
 
     // renderPrediction();
+    
+    const walkAnimation = createWalkAnimationGroup(vrmManager, scene);
 
     walkAnimation.start(true, 1, 0, 60);
 
