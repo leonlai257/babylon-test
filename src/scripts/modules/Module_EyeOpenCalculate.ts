@@ -1,10 +1,10 @@
-import type { Landmark } from "@mediapipe/holistic";
+import type { Landmark } from '@mediapipe/holistic';
 
 class Vector {
     x: number;
     y: number;
     z: number;
-    constructor(a: number, b: number,c:number) {
+    constructor(a: number, b: number, c: number) {
         var _a, _b, _c, _d, _e, _f;
         if (Array.isArray(a)) {
             this.x = (_a = a[0]) !== null && _a !== void 0 ? _a : 0;
@@ -41,12 +41,16 @@ class Vector {
         return v.subtract(this).multiply(fraction).add(this);
     }
     distance(v: Vector, d = 3) {
-        //2D distance
         if (d === 2)
-            return Math.sqrt(Math.pow(this.x - v.x, 2) + Math.pow(this.y - v.y, 2));
-        //3D distance
+            return Math.sqrt(
+                Math.pow(this.x - v.x, 2) + Math.pow(this.y - v.y, 2)
+            );
         else
-            return Math.sqrt(Math.pow(this.x - v.x, 2) + Math.pow(this.y - v.y, 2) + Math.pow(this.z - v.z, 2));
+            return Math.sqrt(
+                Math.pow(this.x - v.x, 2) +
+                    Math.pow(this.y - v.y, 2) +
+                    Math.pow(this.z - v.z, 2)
+            );
     }
 }
 
@@ -54,31 +58,29 @@ const clamp = (val: number, min: number, max: number) => {
     return Math.max(Math.min(val, max), min);
 };
 const remap = (val: number, min: number, max: number) => {
-    //returns min to max -> 0 to 1
     return (clamp(val, min, max) - min) / (max - min);
 };
-/**
- * Landmark points labeled for eye, brow, and pupils
- */
 const RIGHT = 'Right';
 const LEFT = 'Left';
 const points: {
     eye: {
-        [key: string]: [number, number, number, number, number, number, number, number];
-    }
+        [key: string]: [
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number
+        ];
+    };
 } = {
     eye: {
         [LEFT]: [130, 133, 160, 159, 158, 144, 145, 153],
         [RIGHT]: [263, 362, 387, 386, 385, 373, 374, 380],
     },
 };
-/**
- * Calculate eye open ratios and remap to 0-1
- * @param {Array} lm : array of results from tfjs or mediapipe
- * @param {Side} side : designate left or right
- * @param {Number} high : ratio at which eye is considered open
- * @param {Number} low : ratio at which eye is comsidered closed
- */
 export const getEyeOpen = (
     lm: Vector[],
     side = LEFT,
@@ -97,20 +99,13 @@ export const getEyeOpen = (
     );
     // human eye width to height ratio is roughly .3
     const maxRatio = 0.285;
-    // compare ratio against max ratio
     const ratio = clamp(eyeDistance / maxRatio, 0, 2);
-    // remap eye open and close ratios to increase sensitivity
     const eyeOpenRatio = remap(ratio, low, high);
     return {
-        // remapped ratio
         norm: eyeOpenRatio,
-        // ummapped ratio
         raw: ratio,
     };
 };
-/**
- * Calculate eyelid distance ratios based on landmarks on the face
- */
 export const eyeLidRatio = (
     eyeOuterCorner: Vector,
     eyeInnerCorner: Vector,
@@ -121,15 +116,46 @@ export const eyeLidRatio = (
     eyeMidLowerLid: Vector,
     eyeInnerLowerLid: Vector
 ) => {
-    eyeOuterCorner = new Vector(eyeOuterCorner.x, eyeOuterCorner.y, eyeOuterCorner.z);
-    eyeInnerCorner = new Vector(eyeInnerCorner.x, eyeInnerCorner.y, eyeInnerCorner.z);
-    eyeOuterUpperLid = new Vector(eyeOuterUpperLid.x, eyeOuterUpperLid.y, eyeOuterUpperLid.z);
-    eyeMidUpperLid = new Vector(eyeMidUpperLid.x, eyeMidUpperLid.y, eyeMidUpperLid.z);
-    eyeInnerUpperLid = new Vector(eyeInnerUpperLid.x, eyeInnerUpperLid.y, eyeInnerUpperLid.z);
-    eyeOuterLowerLid = new Vector(eyeOuterLowerLid.x, eyeOuterLowerLid.y, eyeOuterLowerLid.z);
-    eyeMidLowerLid = new Vector(eyeMidLowerLid.x, eyeMidLowerLid.y, eyeMidLowerLid.z);
-    eyeInnerLowerLid = new Vector(eyeInnerLowerLid.x, eyeInnerLowerLid.y, eyeInnerLowerLid.z);
-    //use 2D Distances instead of 3D for less jitter
+    eyeOuterCorner = new Vector(
+        eyeOuterCorner.x,
+        eyeOuterCorner.y,
+        eyeOuterCorner.z
+    );
+    eyeInnerCorner = new Vector(
+        eyeInnerCorner.x,
+        eyeInnerCorner.y,
+        eyeInnerCorner.z
+    );
+    eyeOuterUpperLid = new Vector(
+        eyeOuterUpperLid.x,
+        eyeOuterUpperLid.y,
+        eyeOuterUpperLid.z
+    );
+    eyeMidUpperLid = new Vector(
+        eyeMidUpperLid.x,
+        eyeMidUpperLid.y,
+        eyeMidUpperLid.z
+    );
+    eyeInnerUpperLid = new Vector(
+        eyeInnerUpperLid.x,
+        eyeInnerUpperLid.y,
+        eyeInnerUpperLid.z
+    );
+    eyeOuterLowerLid = new Vector(
+        eyeOuterLowerLid.x,
+        eyeOuterLowerLid.y,
+        eyeOuterLowerLid.z
+    );
+    eyeMidLowerLid = new Vector(
+        eyeMidLowerLid.x,
+        eyeMidLowerLid.y,
+        eyeMidLowerLid.z
+    );
+    eyeInnerLowerLid = new Vector(
+        eyeInnerLowerLid.x,
+        eyeInnerLowerLid.y,
+        eyeInnerLowerLid.z
+    );
     const eyeWidth = eyeOuterCorner.distance(eyeInnerCorner, 2);
     const eyeOuterLidDistance = eyeOuterUpperLid.distance(eyeOuterLowerLid, 2);
     const eyeMidLidDistance = eyeMidUpperLid.distance(eyeMidLowerLid, 2);
@@ -139,12 +165,7 @@ export const eyeLidRatio = (
     const ratio = eyeLidAvg / eyeWidth;
     return ratio;
 };
-/**
- * Calculate Eyes
- * @param {Array} lm : array of results from tfjs or mediapipe
- */
 export const calcEyes = (lm: Vector[], { high = 0.75, low = 0.25 } = {}) => {
-    //open [0,1]
     const leftEyeLid = getEyeOpen(lm, LEFT, { high: high, low: low });
     const rightEyeLid = getEyeOpen(lm, RIGHT, { high: high, low: low });
     return {
