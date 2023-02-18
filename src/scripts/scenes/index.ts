@@ -1,9 +1,10 @@
 import {
     ArcRotateCamera,
     Engine,
-    PointLight, Scene,
+    PointLight,
+    Scene,
     SceneLoader,
-    Vector3
+    Vector3,
 } from '@babylonjs/core';
 
 import '@mediapipe/pose';
@@ -16,11 +17,10 @@ import { Pose } from '@mediapipe/pose';
 import 'babylon-vrm-loader';
 import type { VRMManager } from 'babylon-vrm-loader';
 import * as Kalidokit from 'kalidokit';
-import { ResolveRigger } from '../modules/Module_ResolveLandmarks';
+import { ResolveRigger } from '../modules/Module_ResolveRigger';
 import { calcEyes } from '../modules/Module_EyeOpenCalculate';
+import { VRMController } from '../modules/Module_VRMController';
 import createWalkAnimationGroup from '../modules/Module_WalkAnimation';
-import createWalkPath from '../modules/Module_WalkManager';
-
 
 const loadVRM = async (rootUrl, fileName) => {
     const result = await SceneLoader.AppendAsync(rootUrl, fileName);
@@ -53,11 +53,10 @@ const createScene = async (canvas: any) => {
     ) as HTMLCanvasElement;
     const canvasCtx = canvasElement.getContext('2d');
 
-    const vrm = await loadVRM('/src/assets/', 'test.vrm');
-    const vrmManager: VRMManager = vrm.metadata.vrmManagers[0];
+    const vrmController = new VRMController();
+    const vrmManager = await vrmController.loadVRM('/src/assets/', 'test.vrm');
 
     const resolveRigger = new ResolveRigger();
-
 
     // const model = poseDetection.SupportedModels.BlazePose;
     // const detector = await poseDetection.createDetector(model, {
@@ -74,8 +73,18 @@ const createScene = async (canvas: any) => {
     const rigAnimationFrame = 15;
     const transformAnimationFrame = 120;
 
-    const walkAnimationRig = createWalkAnimationGroup(vrmManager, scene, "rig", rigAnimationFrame);
-    const walkAnimationTransform = createWalkAnimationGroup(vrmManager, scene, "transform", transformAnimationFrame);
+    const walkAnimationRig = createWalkAnimationGroup(
+        vrmManager,
+        scene,
+        'rig',
+        rigAnimationFrame
+    );
+    const walkAnimationTransform = createWalkAnimationGroup(
+        vrmManager,
+        scene,
+        'transform',
+        transformAnimationFrame
+    );
     walkAnimationRig.start(true, 1, 0, rigAnimationFrame * 4);
     walkAnimationTransform.start(true, 1, 0, transformAnimationFrame * 4);
 

@@ -4,11 +4,7 @@ import type * as Kalidokit from 'kalidokit';
 
 export class ResolveRigger {
     fromEuler(euler: Kalidokit.XYZ) {
-        return Quaternion.FromEulerAngles(
-            euler.x,
-            euler.y,
-            euler.z
-        );
+        return Quaternion.FromEulerAngles(euler.x, euler.y, euler.z);
     }
 
     rigFace(vrmManager: VRMManager, faceRig: Kalidokit.TFace) {
