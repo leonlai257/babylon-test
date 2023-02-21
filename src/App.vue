@@ -20,17 +20,6 @@ import { createScene } from "./scripts/scenes/index";
                     <BabylonScene />
                     <!-- <canvas ref="canvasRef" width="500" height="500"></canvas> -->
                     <canvas id="canvas" width="500" height="500"></canvas>
-                    <video
-                        id="video"
-                        playsinline
-                        style="
-                            -webkit-transform: scaleX(-1);
-                            transform: scaleX(-1);
-                            visibility: hidden;
-                            width: auto;
-                            height: auto;
-                        "
-                    ></video>
                 </div>
 
                 <!-- <div id="scatter-gl-container"></div> -->

@@ -22,6 +22,18 @@ export default {
 
 <template>
     <canvas ref="canvasRef" class="canvas" width="1600" height="900" />
+    <video
+                        id="video"
+                        width="640"
+                        height="480"
+                        style="
+                            -webkit-transform: scaleX(-1);
+                            transform: scaleX(-1);
+                            visibility: hidden;
+                            width: auto;
+                            height: auto;
+                        "
+                    ></video>
 </template>
 
 <style scoped>

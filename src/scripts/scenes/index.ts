@@ -9,11 +9,13 @@ import {
 
 import '@mediapipe/pose';
 import * as poseDetection from '@tensorflow-models/pose-detection';
+import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
 
 import { Camera } from '@mediapipe/camera_utils';
 import { Holistic } from '@mediapipe/holistic';
 import { Pose } from '@mediapipe/pose';
+// import { PoseLandmark } from '@mediapipe/face_mesh';
 import 'babylon-vrm-loader';
 import type { VRMManager } from 'babylon-vrm-loader';
 import * as Kalidokit from 'kalidokit';
@@ -21,6 +23,9 @@ import { ResolveRigger } from '../modules/Module_ResolveRigger';
 import { calcEyes } from '../modules/Module_EyeOpenCalculate';
 import { VRMController } from '../modules/Module_VRMController';
 import createWalkAnimationGroup from '../modules/Module_WalkAnimation';
+import type { PixelInput } from '@tensorflow-models/pose-detection/dist/shared/calculators/interfaces/common_interfaces';
+import { renderPrediction } from '../modules/Module_CameraTracking';
+import { FaceMesh } from '@mediapipe/face_mesh';
 
 const loadVRM = async (rootUrl, fileName) => {
     const result = await SceneLoader.AppendAsync(rootUrl, fileName);
@@ -43,32 +48,18 @@ const createScene = async (canvas: any) => {
     );
     scene.addCamera(arcCamera);
 
-    const light = new PointLight('pointLight', new Vector3(1, 10, 1), scene);
-
     const videoElement: HTMLVideoElement = document.getElementById(
         'video'
     ) as HTMLVideoElement;
-    const canvasElement = document.getElementById(
-        'canvas'
-    ) as HTMLCanvasElement;
-    const canvasCtx = canvasElement.getContext('2d');
+
+    const light = new PointLight('pointLight', new Vector3(1, 10, 1), scene);
 
     const vrmController = new VRMController();
     const vrmManager = await vrmController.loadVRM('/src/assets/', 'test.vrm');
 
     const resolveRigger = new ResolveRigger();
 
-    // const model = poseDetection.SupportedModels.BlazePose;
-    // const detector = await poseDetection.createDetector(model, {
-    //     runtime: 'mediapipe',
-    //     modelType: 'full'
-    // });
-    // const poses = detector.estimatePoses(videoElement);
-    // console.log(poses)
-
-    // detector = await createDetector();
-
-    // renderPrediction();
+    // await renderPrediction();
 
     const rigAnimationFrame = 15;
     const transformAnimationFrame = 120;
@@ -88,6 +79,12 @@ const createScene = async (canvas: any) => {
     walkAnimationRig.start(true, 1, 0, rigAnimationFrame * 4);
     walkAnimationTransform.start(true, 1, 0, transformAnimationFrame * 4);
 
+    const mediaPipeConfig = {
+        selfieMode: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+    };
+
     const pose = new Pose({
         locateFile: (file) => {
             return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
@@ -96,8 +93,7 @@ const createScene = async (canvas: any) => {
     pose.setOptions({
         modelComplexity: 2,
         smoothLandmarks: true,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5,
+        ...mediaPipeConfig,
     });
 
     pose.onResults((results) => {
@@ -114,19 +110,21 @@ const createScene = async (canvas: any) => {
         }
     });
 
-    let holistic = new Holistic({
+    const faceMesh = new FaceMesh({
         locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.4.1633559476/${file}`;
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
         },
     });
 
-    holistic.onResults((results) => {
-        let faceLandmarks = results.faceLandmarks;
-        let rightHandLandmarks = results.rightHandLandmarks;
-        let leftHandLandmarks = results.leftHandLandmarks;
+    faceMesh.setOptions({
+        enableFaceGeometry: false,
+        maxNumFaces: 1,
+        ...mediaPipeConfig,
+    });
 
-        let faceRig, eyesRig, rightHandRig, leftHandRig;
-
+    faceMesh.onResults((results) => {
+        let faceLandmarks = results.multiFaceLandmarks[0];
+        let faceRig, eyesRig;
         if (faceLandmarks) {
             faceRig = Kalidokit.Face.solve(faceLandmarks, {
                 runtime: 'mediapipe',
@@ -150,31 +148,70 @@ const createScene = async (canvas: any) => {
             vrmManager.morphing(vowel.shape, vowel.degree);
             resolveRigger.rigFace(vrmManager, faceRig as Kalidokit.TFace);
         }
-
-        // right hand landmarks are mirrored
-        if (leftHandLandmarks) {
-            rightHandRig = Kalidokit.Hand.solve(leftHandLandmarks, 'Right');
-            resolveRigger.rigRightHand(
-                vrmManager,
-                rightHandRig as Kalidokit.THand<Kalidokit.Side>
-            );
-        }
-
-        // left hand landmarks are mirrored
-        if (rightHandLandmarks) {
-            leftHandRig = Kalidokit.Hand.solve(rightHandLandmarks, 'Left');
-            resolveRigger.rigLeftHand(
-                vrmManager,
-                leftHandRig as Kalidokit.THand<Kalidokit.Side>
-            );
-        }
     });
+
+    // let holistic = new Holistic({
+    //     locateFile: (file) => {
+    //         return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.4.1633559476/${file}`;
+    //     },
+    // });
+
+    // holistic.onResults((results) => {
+    //     let faceLandmarks = results.faceLandmarks;
+    //     let rightHandLandmarks = results.rightHandLandmarks;
+    //     let leftHandLandmarks = results.leftHandLandmarks;
+
+    //     let faceRig, eyesRig, rightHandRig, leftHandRig;
+
+    //     if (faceLandmarks) {
+    //         faceRig = Kalidokit.Face.solve(faceLandmarks, {
+    //             runtime: 'mediapipe',
+    //             video: videoElement,
+    //         }) as Kalidokit.TFace;
+
+    //         eyesRig = calcEyes(faceLandmarks, { high: 1, low: 0.8 }); // could test around low being 0.75 to 0.85
+
+    //         vrmManager.morphing('Blink_L', 1.0 - eyesRig.l);
+    //         vrmManager.morphing('Blink_R', 1.0 - eyesRig.r);
+
+    //         /* Loop through faceRig.mouth.shape to find the highest value, then use that key to morph the VRM facial expression */
+    //         const vowelList = Object.keys(faceRig.mouth.shape);
+    //         let vowel = { shape: 'A', degree: 0 };
+    //         for (let i in vowelList) {
+    //             if (faceRig.mouth.shape[vowelList[i]] > vowel.degree) {
+    //                 vowel.shape = vowelList[i];
+    //                 vowel.degree = faceRig.mouth.shape[vowelList[i]];
+    //             }
+    //         }
+    //         vrmManager.morphing(vowel.shape, vowel.degree);
+    //         resolveRigger.rigFace(vrmManager, faceRig as Kalidokit.TFace);
+    //     }
+
+    //     // right hand landmarks are mirrored
+    //     if (leftHandLandmarks) {
+    //         rightHandRig = Kalidokit.Hand.solve(leftHandLandmarks, 'Right');
+    //         resolveRigger.rigRightHand(
+    //             vrmManager,
+    //             rightHandRig as Kalidokit.THand<Kalidokit.Side>
+    //         );
+    //     }
+
+    //     // left hand landmarks are mirrored
+    //     if (rightHandLandmarks) {
+    //         leftHandRig = Kalidokit.Hand.solve(rightHandLandmarks, 'Left');
+    //         resolveRigger.rigLeftHand(
+    //             vrmManager,
+    //             leftHandRig as Kalidokit.THand<Kalidokit.Side>
+    //         );
+    //     }
+    // });
 
     // use Mediapipe's webcam utils to send video to holistic every frame
     const trackingCamera = new Camera(videoElement, {
         onFrame: async () => {
-            await holistic.send({ image: videoElement });
+            // await holistic.send({ image: videoElement });
             await pose.send({ image: videoElement });
+            await faceMesh.send({ image: videoElement });
         },
         width: 640,
         height: 480,
