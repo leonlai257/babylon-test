@@ -1,5 +1,3 @@
-import type { Landmark } from '@mediapipe/holistic';
-
 class Vector {
     x: number;
     y: number;
@@ -64,22 +62,17 @@ const RIGHT = 'Right';
 const LEFT = 'Left';
 const points: {
     eye: {
-        [key: string]: [
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number
-        ];
+        [key: string]: number[];
     };
 } = {
     eye: {
         [LEFT]: [130, 133, 160, 159, 158, 144, 145, 153],
         [RIGHT]: [263, 362, 387, 386, 385, 373, 374, 380],
     },
+    // eye: {
+    //     [LEFT]: [1, 2, 3],
+    //     [RIGHT]: [4, 5, 6],
+    // },
 };
 export const getEyeOpen = (
     lm: Vector[],
@@ -106,6 +99,7 @@ export const getEyeOpen = (
         raw: ratio,
     };
 };
+
 export const eyeLidRatio = (
     eyeOuterCorner: Vector,
     eyeInnerCorner: Vector,
@@ -165,6 +159,7 @@ export const eyeLidRatio = (
     const ratio = eyeLidAvg / eyeWidth;
     return ratio;
 };
+
 export const calcEyes = (lm: Vector[], { high = 0.75, low = 0.25 } = {}) => {
     const leftEyeLid = getEyeOpen(lm, LEFT, { high: high, low: low });
     const rightEyeLid = getEyeOpen(lm, RIGHT, { high: high, low: low });

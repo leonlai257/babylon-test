@@ -17,6 +17,7 @@
         "@mediapipe/face_mesh": "^0.4.1633559619",
         "@mediapipe/holistic": "^0.5.1675471629",
         "@mediapipe/pose": "^0.5.1675469404",
+        "@tensorflow-models/face-landmarks-detection": "^1.0.2",
         "@tensorflow-models/pose-detection": "^2.0.0",
         "@tensorflow/tfjs-backend-wasm": "^4.0.0",
         "@tensorflow/tfjs-backend-webgl": "^4.2.0",
