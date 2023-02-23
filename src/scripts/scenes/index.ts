@@ -28,6 +28,7 @@ import {
     posePrediction,
     facePrediction,
 } from '../modules/Module_CameraTracking';
+import WalkControl from '../modules/Module_WalkControl';
 
 const createScene = async (canvas: any) => {
     const engine = new Engine(canvas);
@@ -56,74 +57,7 @@ const createScene = async (canvas: any) => {
     // await posePrediction();
     // await facePrediction();
 
-    const rigAnimationFrame = 15;
-    const transformAnimationFrame = 120;
-
-    const walkAnimationRig = createWalkAnimationGroup(
-        vrmManager,
-        scene,
-        'rig',
-        rigAnimationFrame
-    );
-
-    const step = -0.01;
-    const rotationStep = 0.05;
-    let toggleWalk = true;
-    let previousQuaternion: Quaternion | undefined = undefined;
-    let targetQuaternion: Quaternion | undefined = undefined;
-
-    scene.onKeyboardObservable.add((keyInput) => {
-        switch (keyInput.type) {
-            case KeyboardEventTypes.KEYDOWN:
-                console.log('KEY DOWN: ', keyInput.event.key);
-                if (keyInput.event.key === 'k' || keyInput.event.key === 'K') {
-                    toggleWalk = !toggleWalk;
-                }
-                break;
-            case KeyboardEventTypes.KEYUP:
-                console.log('KEY UP: ', keyInput.event.code);
-                break;
-        }
-    });
-
-    scene.onBeforeRenderObservable.add(() => {
-        if (toggleWalk) {
-            walkAnimationRig.start(true, 1, 0, rigAnimationFrame * 4);
-
-            if (previousQuaternion) {
-                targetQuaternion = previousQuaternion;
-                previousQuaternion = undefined;
-            }
-
-            if (!targetQuaternion) {
-                vrmManager.rootMesh.movePOV(0, 0, step);
-                vrmManager.rootMesh.addRotation(0, Math.PI / 180, 0);
-            }
-        } else {
-            if (!previousQuaternion) {
-                previousQuaternion = vrmManager.rootMesh.rotationQuaternion;
-                targetQuaternion = new Quaternion(0, 0, 0, 1);
-            }
-        }
-
-        if (targetQuaternion) {
-            vrmManager.rootMesh.rotationQuaternion = Quaternion.Slerp(
-                vrmManager.rootMesh.rotationQuaternion,
-                targetQuaternion as Quaternion,
-                rotationStep
-            );
-
-            if (
-                Math.abs(
-                    vrmManager.rootMesh.rotationQuaternion!.y -
-                        targetQuaternion.y
-                ) < 0.05
-            ) {
-                targetQuaternion = undefined;
-                walkAnimationRig.stop();
-            }
-        }
-    });
+    WalkControl(scene, vrmManager);
 
     // const walkAnimationTransform = createWalkAnimationGroup(
     //     vrmManager,
