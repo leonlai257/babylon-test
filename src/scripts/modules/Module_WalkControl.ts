@@ -1,15 +1,22 @@
 import { KeyboardEventTypes, Quaternion, type Scene } from '@babylonjs/core';
 import type { VRMManager } from 'babylon-vrm-loader';
-import createWalkAnimationGroup from './Module_WalkAnimation';
+import createWalkAnimationGroup from './Module_Animation';
 
 function WalkControl(scene: Scene, vrmManager: VRMManager) {
     const rigAnimationFrame = 15;
     const transformAnimationFrame = 120;
 
-    const walkAnimationRig = createWalkAnimationGroup(
+    const handAnimationRig = createWalkAnimationGroup(
         vrmManager,
         scene,
-        'rig',
+        'hand',
+        rigAnimationFrame
+    );
+
+    const legAnimationRig = createWalkAnimationGroup(
+        vrmManager,
+        scene,
+        'leg',
         rigAnimationFrame
     );
 
@@ -35,7 +42,7 @@ function WalkControl(scene: Scene, vrmManager: VRMManager) {
 
     scene.onBeforeRenderObservable.add(() => {
         if (toggleWalk) {
-            walkAnimationRig.start(true, 1, 0, rigAnimationFrame * 4);
+            legAnimationRig.start(true, 1, 0, rigAnimationFrame * 4);
 
             if (previousQuaternion) {
                 targetQuaternion = previousQuaternion;
@@ -68,7 +75,7 @@ function WalkControl(scene: Scene, vrmManager: VRMManager) {
                 ) < 0.02
             ) {
                 targetQuaternion = undefined;
-                walkAnimationRig.stop();
+                legAnimationRig.stop();
             }
         }
     });

@@ -57,7 +57,7 @@ function createTransformAnimation(animation: {
 function createAnimationGroup(
     vrmManager: any,
     scene: BABYLON.Scene,
-    name: 'rig' | 'transform',
+    name: 'hand' | 'leg' | 'transform',
     frame: number
 ): BABYLON.AnimationGroup {
     const walkTransformAnim = {
@@ -112,29 +112,40 @@ function createAnimationGroup(
         ],
     };
 
-    // const leftUpperArmAnim = {
-    //     name: 'leftUpperArmAnim',
-    //     keys: [
-    //         [0, 0, 0, Math.PI / 2.5],
-    //         [15, 0, -Math.PI / 6, Math.PI / 2.5],
-    //         [45, 0, Math.PI / 4, Math.PI / 2.5],
-    //         [60, 0, 0, Math.PI / 2.5],
-    //     ],
-    // };
+    const leftUpperArmAnim = {
+        name: 'leftUpperArmAnim',
+        keys: [
+            [0, 0, 0, Math.PI / 2.5],
+            [15, 0, -Math.PI / 6, Math.PI / 2.5],
+            [45, 0, Math.PI / 4, Math.PI / 2.5],
+            [60, 0, 0, Math.PI / 2.5],
+        ],
+    };
 
-    // const rightUpperArmAnim = {
-    //     name: 'rightUpperArmAnim',
-    //     keys: [
-    //         [0, 0, 0, -Math.PI / 2.5],
-    //         [15, 0, Math.PI / 4, -Math.PI / 2.5],
-    //         [45, 0, -Math.PI / 6, -Math.PI / 2.5],
-    //         [60, 0, 0, -Math.PI / 2.5],
-    //     ],
-    // };
+    const rightUpperArmAnim = {
+        name: 'rightUpperArmAnim',
+        keys: [
+            [0, 0, 0, -Math.PI / 2.5],
+            [15, 0, Math.PI / 4, -Math.PI / 2.5],
+            [45, 0, -Math.PI / 6, -Math.PI / 2.5],
+            [60, 0, 0, -Math.PI / 2.5],
+        ],
+    };
     const animationGroup = new BABYLON.AnimationGroup(name, scene);
     animationGroup.loopAnimation = true;
     switch (name) {
-        case 'rig':
+        case 'hand':
+            animationGroup.addTargetedAnimation(
+                createRigAnimation(leftUpperArmAnim),
+                vrmManager.humanoidBone.leftUpperArm
+            );
+            animationGroup.addTargetedAnimation(
+                createRigAnimation(rightUpperArmAnim),
+                vrmManager.humanoidBone.rightUpperArm
+            );
+            break;
+
+        case 'leg':
             animationGroup.addTargetedAnimation(
                 createRigAnimation(leftUpperLegAnim),
                 vrmManager.humanoidBone.leftUpperLeg
@@ -143,14 +154,7 @@ function createAnimationGroup(
                 createRigAnimation(rightUpperLegAnim),
                 vrmManager.humanoidBone.rightUpperLeg
             );
-            // animationGroup.addTargetedAnimation(
-            //     createAnimation(leftUpperArmAnim),
-            //     vrmManager.humanoidBone.leftUpperArm,
-            // );
-            // animationGroup.addTargetedAnimation(
-            //     createAnimation(rightUpperArmAnim),
-            //     vrmManager.humanoidBone.rightUpperArm,
-            // );
+
             break;
         case 'transform':
             animationGroup.addTargetedAnimation(
