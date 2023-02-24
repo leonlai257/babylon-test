@@ -2,11 +2,11 @@ import {
     ArcRotateCamera,
     Engine,
     PointLight,
+    Quaternion,
     Scene,
     SceneLoader,
-    Vector3,
     KeyboardEventTypes,
-    Quaternion,
+    Vector3,
 } from '@babylonjs/core';
 
 import '@mediapipe/pose';
@@ -28,6 +28,7 @@ import {
     posePrediction,
     facePrediction,
 } from '../modules/Module_CameraTracking';
+import WalkControl from '../modules/Module_WalkControl';
 
 const createScene = async (canvas: any) => {
     const engine = new Engine(canvas);
@@ -56,67 +57,14 @@ const createScene = async (canvas: any) => {
     // await posePrediction();
     // await facePrediction();
 
-    const step = -0.01;
-    let toggleWalk = true;
-    let isTransitioning = false;
-    let previousRotation: Quaternion | undefined = undefined;
-    scene.onKeyboardObservable.add((kbInfo) => {
-        switch (kbInfo.type) {
-            case KeyboardEventTypes.KEYDOWN:
-                console.log('KEY DOWN: ', kbInfo.event.key);
-                if (kbInfo.event.key === 'K' || kbInfo.event.key === 'k') {
-                    toggleWalk = !toggleWalk;
-                    isTransitioning = !isTransitioning;
-                }
-                break;
-            case KeyboardEventTypes.KEYUP:
-                console.log('KEY UP: ', kbInfo.event.code);
-                break;
-        }
-    });
+    WalkControl(scene, vrmManager);
 
-    scene.onBeforeRenderObservable.add(() => {
-        console.log(toggleWalk);
-        if (toggleWalk) {
-            if (previousRotation) {
-                vrmManager.rootMesh.rotationQuaternion = previousRotation;
-                previousRotation = undefined;
-            }
-            vrmManager.rootMesh.movePOV(0, 0, step);
-            vrmManager.rootMesh.addRotation(0, Math.PI / 180, 0);
-        } else {
-            if (!previousRotation) {
-                previousRotation = vrmManager.rootMesh.rotationQuaternion;
-            }
-            if (
-                vrmManager.rootMesh.rotationQuaternion !=
-                new Quaternion(0, 0, 0, 1)
-            ) {
-            }
-            vrmManager.rootMesh.rotationQuaternion = Quaternion.FromEulerAngles(
-                0,
-                0,
-                0
-            );
-        }
-    });
-
-    // const rigAnimationFrame = 15;
-    // const transformAnimationFrame = 120;
-
-    // const walkAnimationRig = createAnimationGroup(
-    //     vrmManager,
-    //     scene,
-    //     'rig',
-    //     rigAnimationFrame
-    // );
-    // const walkAnimationTransform = createAnimationGroup(
+    // const walkAnimationTransform = createWalkAnimationGroup(
     //     vrmManager,
     //     scene,
     //     'transform',
     //     transformAnimationFrame
     // );
-    // walkAnimationRig.start(true, 1, 0, rigAnimationFrame * 4);
     // walkAnimationTransform.start(true, 1, 0, transformAnimationFrame * 4);
 
     const mediaPipeConfig = {
