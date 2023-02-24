@@ -6,10 +6,10 @@ function WalkControl(scene: Scene, vrmManager: VRMManager) {
     const rigAnimationFrame = 15;
     const transformAnimationFrame = 120;
 
-    const handAnimationRig = createWalkAnimationGroup(
+    const armAnimationRig = createWalkAnimationGroup(
         vrmManager,
         scene,
-        'hand',
+        'arm',
         rigAnimationFrame
     );
 

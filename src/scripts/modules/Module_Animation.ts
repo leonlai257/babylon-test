@@ -57,7 +57,7 @@ function createTransformAnimation(animation: {
 function createAnimationGroup(
     vrmManager: any,
     scene: BABYLON.Scene,
-    name: 'hand' | 'leg' | 'transform',
+    name: 'arm' | 'leg' | 'transform',
     frame: number
 ): BABYLON.AnimationGroup {
     const walkTransformAnim = {
@@ -134,7 +134,7 @@ function createAnimationGroup(
     const animationGroup = new BABYLON.AnimationGroup(name, scene);
     animationGroup.loopAnimation = true;
     switch (name) {
-        case 'hand':
+        case 'arm':
             animationGroup.addTargetedAnimation(
                 createRigAnimation(leftUpperArmAnim),
                 vrmManager.humanoidBone.leftUpperArm
