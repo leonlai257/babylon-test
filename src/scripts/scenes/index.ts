@@ -5,6 +5,8 @@ import {
     Scene,
     SceneLoader,
     Vector3,
+    KeyboardEventTypes,
+    Quaternion,
 } from '@babylonjs/core';
 
 import '@mediapipe/pose';
@@ -21,7 +23,7 @@ import * as Kalidokit from 'kalidokit';
 import { ResolveRigger } from '../modules/Module_ResolveRigger';
 import { calcEyes } from '../modules/Module_EyeOpenCalculate';
 import { loadVRM } from '../modules/Module_VRMController';
-import createWalkAnimationGroup from '../modules/Module_WalkAnimation';
+import createAnimationGroup from '../modules/Module_Animation';
 import {
     posePrediction,
     facePrediction,
@@ -52,18 +54,59 @@ const createScene = async (canvas: any) => {
     const resolveRigger = new ResolveRigger();
 
     // await posePrediction();
-    await facePrediction();
+    // await facePrediction();
+
+    const step = -0.01;
+    let toggleWalk = true;
+    let isTransitioning = false;
+    let previousRotation: Quaternion | undefined = undefined;
+    scene.onKeyboardObservable.add((kbInfo) => {
+        switch (kbInfo.type) {
+            case KeyboardEventTypes.KEYDOWN:
+                console.log('KEY DOWN: ', kbInfo.event.key);
+                if (kbInfo.event.key === 'K' || kbInfo.event.key === 'k') {
+                    toggleWalk = !toggleWalk;
+                    isTransitioning = !isTransitioning;
+                }
+                break;
+            case KeyboardEventTypes.KEYUP:
+                console.log('KEY UP: ', kbInfo.event.code);
+                break;
+        }
+    });
+
+    scene.onBeforeRenderObservable.add(() => {
+        console.log(toggleWalk);
+        if (toggleWalk) {
+            if (previousRotation) {
+                vrmManager.rootMesh.rotationQuaternion = previousRotation;
+                previousRotation = undefined;
+            }
+            vrmManager.rootMesh.movePOV(0, 0, step);
+            vrmManager.rootMesh.addRotation(0, Math.PI / 180, 0);
+        } else {
+            if (!previousRotation) {
+                previousRotation = vrmManager.rootMesh.rotationQuaternion;
+            }
+            vrmManager.rootMesh.rotationQuaternion = Quaternion.FromEulerAngles(
+                0,
+                0,
+                0
+            );
+            console.log(vrmManager.rootMesh.rotationQuaternion);
+        }
+    });
 
     // const rigAnimationFrame = 15;
     // const transformAnimationFrame = 120;
 
-    // const walkAnimationRig = createWalkAnimationGroup(
+    // const walkAnimationRig = createAnimationGroup(
     //     vrmManager,
     //     scene,
     //     'rig',
     //     rigAnimationFrame
     // );
-    // const walkAnimationTransform = createWalkAnimationGroup(
+    // const walkAnimationTransform = createAnimationGroup(
     //     vrmManager,
     //     scene,
     //     'transform',
@@ -72,76 +115,76 @@ const createScene = async (canvas: any) => {
     // walkAnimationRig.start(true, 1, 0, rigAnimationFrame * 4);
     // walkAnimationTransform.start(true, 1, 0, transformAnimationFrame * 4);
 
-    // const mediaPipeConfig = {
-    //     selfieMode: true,
-    //     minDetectionConfidence: 0.5,
-    //     minTrackingConfidence: 0.5,
-    // };
+    const mediaPipeConfig = {
+        selfieMode: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+    };
 
-    // const pose = new Pose({
-    //     locateFile: (file) => {
-    //         return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
-    //     },
-    // });
-    // pose.setOptions({
-    //     modelComplexity: 2,
-    //     smoothLandmarks: true,
-    //     ...mediaPipeConfig,
-    // });
+    const pose = new Pose({
+        locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+        },
+    });
+    pose.setOptions({
+        modelComplexity: 2,
+        smoothLandmarks: true,
+        ...mediaPipeConfig,
+    });
 
-    // pose.onResults((results) => {
-    //     let poseLandmarks = results.poseLandmarks;
-    //     let poseLandmarks3d = results.poseWorldLandmarks;
-    //     let poseRig;
+    pose.onResults((results) => {
+        let poseLandmarks = results.poseLandmarks;
+        let poseLandmarks3d = results.poseWorldLandmarks;
+        let poseRig;
 
-    //     if (poseLandmarks && poseLandmarks3d) {
-    //         poseRig = Kalidokit.Pose.solve(poseLandmarks3d, poseLandmarks, {
-    //             runtime: 'mediapipe',
-    //             video: videoElement,
-    //         });
-    //         resolveRigger.rigPose(vrmManager, poseRig as Kalidokit.TPose);
-    //     }
-    // });
+        if (poseLandmarks && poseLandmarks3d) {
+            poseRig = Kalidokit.Pose.solve(poseLandmarks3d, poseLandmarks, {
+                runtime: 'mediapipe',
+                video: videoElement,
+            });
+            resolveRigger.rigPose(vrmManager, poseRig as Kalidokit.TPose);
+        }
+    });
 
-    // const faceMesh = new FaceMesh({
-    //     locateFile: (file) => {
-    //         return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
-    //     },
-    // });
+    const faceMesh = new FaceMesh({
+        locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+        },
+    });
 
-    // faceMesh.setOptions({
-    //     enableFaceGeometry: false,
-    //     maxNumFaces: 1,
-    //     ...mediaPipeConfig,
-    // });
+    faceMesh.setOptions({
+        enableFaceGeometry: false,
+        maxNumFaces: 1,
+        ...mediaPipeConfig,
+    });
 
-    // faceMesh.onResults((results) => {
-    //     let faceLandmarks = results.multiFaceLandmarks[0];
-    //     let faceRig, eyesRig;
-    //     if (faceLandmarks) {
-    //         faceRig = Kalidokit.Face.solve(faceLandmarks, {
-    //             runtime: 'mediapipe',
-    //             video: videoElement,
-    //         }) as Kalidokit.TFace;
+    faceMesh.onResults((results) => {
+        let faceLandmarks = results.multiFaceLandmarks[0];
+        let faceRig, eyesRig;
+        if (faceLandmarks) {
+            faceRig = Kalidokit.Face.solve(faceLandmarks, {
+                runtime: 'mediapipe',
+                video: videoElement,
+            }) as Kalidokit.TFace;
 
-    //         eyesRig = calcEyes(faceLandmarks, { high: 1, low: 0.8 }); // could test around low being 0.75 to 0.85
+            eyesRig = calcEyes(faceLandmarks, { high: 1, low: 0.8 }); // could test around low being 0.75 to 0.85
 
-    //         vrmManager.morphing('Blink_L', 1.0 - eyesRig.l);
-    //         vrmManager.morphing('Blink_R', 1.0 - eyesRig.r);
+            vrmManager.morphing('Blink_L', 1.0 - eyesRig.l);
+            vrmManager.morphing('Blink_R', 1.0 - eyesRig.r);
 
-    //         /* Loop through faceRig.mouth.shape to find the highest value, then use that key to morph the VRM facial expression */
-    //         const vowelList = Object.keys(faceRig.mouth.shape);
-    //         let vowel = { shape: 'A', degree: 0 };
-    //         for (let i in vowelList) {
-    //             if (faceRig.mouth.shape[vowelList[i]] > vowel.degree) {
-    //                 vowel.shape = vowelList[i];
-    //                 vowel.degree = faceRig.mouth.shape[vowelList[i]];
-    //             }
-    //         }
-    //         vrmManager.morphing(vowel.shape, vowel.degree);
-    //         resolveRigger.rigFace(vrmManager, faceRig as Kalidokit.TFace);
-    //     }
-    // });
+            /* Loop through faceRig.mouth.shape to find the highest value, then use that key to morph the VRM facial expression */
+            const vowelList = Object.keys(faceRig.mouth.shape);
+            let vowel = { shape: 'A', degree: 0 };
+            for (let i in vowelList) {
+                if (faceRig.mouth.shape[vowelList[i]] > vowel.degree) {
+                    vowel.shape = vowelList[i];
+                    vowel.degree = faceRig.mouth.shape[vowelList[i]];
+                }
+            }
+            vrmManager.morphing(vowel.shape, vowel.degree);
+            resolveRigger.rigFace(vrmManager, faceRig as Kalidokit.TFace);
+        }
+    });
 
     // let holistic = new Holistic({
     //     locateFile: (file) => {
@@ -199,17 +242,17 @@ const createScene = async (canvas: any) => {
     //     }
     // });
 
-    // // use Mediapipe's webcam utils to send video to holistic every frame
-    // const trackingCamera = new Camera(videoElement, {
-    //     onFrame: async () => {
-    //         // await holistic.send({ image: videoElement });
-    //         await pose.send({ image: videoElement });
-    //         await faceMesh.send({ image: videoElement });
-    //     },
-    //     width: 640,
-    //     height: 480,
-    // });
-    // trackingCamera.start();
+    // use Mediapipe's webcam utils to send video to holistic every frame
+    const trackingCamera = new Camera(videoElement, {
+        onFrame: async () => {
+            // await holistic.send({ image: videoElement });
+            await pose.send({ image: videoElement });
+            await faceMesh.send({ image: videoElement });
+        },
+        width: 640,
+        height: 480,
+    });
+    trackingCamera.start();
 
     engine.runRenderLoop(() => {
         scene.render();

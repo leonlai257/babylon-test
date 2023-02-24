@@ -1,4 +1,4 @@
-import * as BABYLON from "@babylonjs/core";
+import * as BABYLON from '@babylonjs/core';
 
 function createRigAnimation(animation: {
     name: string;
@@ -9,13 +9,17 @@ function createRigAnimation(animation: {
         'rotationQuaternion',
         60, // fps
         BABYLON.Animation.ANIMATIONTYPE_QUATERNION,
-        BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE,
+        BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE
     );
     const keys = [];
     for (const key of animation.keys) {
         keys.push({
             frame: key[0],
-            value: BABYLON.Quaternion.RotationYawPitchRoll(key[1], key[2], key[3]),
+            value: BABYLON.Quaternion.RotationYawPitchRoll(
+                key[1],
+                key[2],
+                key[3]
+            ),
         });
     }
     anim.setKeys(keys);
@@ -29,10 +33,10 @@ function createTransformAnimation(animation: {
 }): BABYLON.Animation {
     const anim = new BABYLON.Animation(
         animation.name,
-        "position",
+        'position',
         60, // fps
         BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
-        BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE,
+        BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE
     );
     const keys = [];
     for (const key of animation.keys) {
@@ -46,17 +50,47 @@ function createTransformAnimation(animation: {
     return anim;
 }
 
-function createWalkAnimationGroup(vrmManager: any, scene: BABYLON.Scene, name: "rig" | "transform", frame: number): BABYLON.AnimationGroup {
+// function moveInCircle(step: number, angle: number) {
+//     const
+// }
+
+function createAnimationGroup(
+    vrmManager: any,
+    scene: BABYLON.Scene,
+    name: 'rig' | 'transform',
+    frame: number
+): BABYLON.AnimationGroup {
     const walkTransformAnim = {
         name: 'WalkTransform',
-        keys: [[0, 0, 0, 0], [frame, -1, 0, 0], [frame * 2, 0, 0, 0], [frame * 3, 1, 0, 0], [frame * 4, 0, 0, 0]]
+        keys: [
+            [0, 0, 0, 0],
+            [frame, -1, 0, 0],
+            [frame * 2, 0, 0, 0],
+            [frame * 3, 1, 0, 0],
+            [frame * 4, 0, 0, 0],
+        ],
     };
 
     const walkRotateAnim = {
         name: 'WalkRotate',
-        keys: [[0, -Math.PI / 10, 0, 0], [frame * 1 / 4, -Math.PI / 10, 0, 0], [frame * 3 / 4, -Math.PI / 10, 0, 0], [frame, 0, 0, 0], [frame * 5 / 4, Math.PI / 10, 0, 0], [frame * 11 / 4, Math.PI / 10, 0, 0], [frame * 3, 0, 0, 0], [frame * 13 / 4, -Math.PI / 10, 0, 0], [frame * 4, -Math.PI / 10, 0, 0]]
+        keys: [
+            [0, -Math.PI / 10, 0, 0],
+            [(frame * 1) / 4, -Math.PI / 10, 0, 0],
+            [(frame * 3) / 4, -Math.PI / 10, 0, 0],
+            [frame, 0, 0, 0],
+            [(frame * 5) / 4, Math.PI / 10, 0, 0],
+            [(frame * 11) / 4, Math.PI / 10, 0, 0],
+            [frame * 3, 0, 0, 0],
+            [(frame * 13) / 4, -Math.PI / 10, 0, 0],
+            [frame * 4, -Math.PI / 10, 0, 0],
+        ],
     };
 
+    let step = 0.05;
+
+    const sphere = BABYLON.MeshBuilder.CreateSphere('sphere', {
+        diameter: 0.5,
+    });
 
     const leftUpperLegAnim = {
         name: 'leftUpperLegAnim',
@@ -100,14 +134,14 @@ function createWalkAnimationGroup(vrmManager: any, scene: BABYLON.Scene, name: "
     const animationGroup = new BABYLON.AnimationGroup(name, scene);
     animationGroup.loopAnimation = true;
     switch (name) {
-        case "rig":
+        case 'rig':
             animationGroup.addTargetedAnimation(
                 createRigAnimation(leftUpperLegAnim),
-                vrmManager.humanoidBone.leftUpperLeg,
+                vrmManager.humanoidBone.leftUpperLeg
             );
             animationGroup.addTargetedAnimation(
                 createRigAnimation(rightUpperLegAnim),
-                vrmManager.humanoidBone.rightUpperLeg,
+                vrmManager.humanoidBone.rightUpperLeg
             );
             // animationGroup.addTargetedAnimation(
             //     createAnimation(leftUpperArmAnim),
@@ -118,19 +152,19 @@ function createWalkAnimationGroup(vrmManager: any, scene: BABYLON.Scene, name: "
             //     vrmManager.humanoidBone.rightUpperArm,
             // );
             break;
-        case "transform":
+        case 'transform':
             animationGroup.addTargetedAnimation(
                 createTransformAnimation(walkTransformAnim),
-                vrmManager.rootMesh,
+                vrmManager.rootMesh
             );
             animationGroup.addTargetedAnimation(
                 createRigAnimation(walkRotateAnim),
-                vrmManager.rootMesh,
-            )
+                vrmManager.rootMesh
+            );
             break;
     }
 
     return animationGroup;
 }
 
-export default createWalkAnimationGroup;
+export default createAnimationGroup;
