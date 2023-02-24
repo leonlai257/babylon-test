@@ -88,12 +88,16 @@ const createScene = async (canvas: any) => {
             if (!previousRotation) {
                 previousRotation = vrmManager.rootMesh.rotationQuaternion;
             }
+            if (
+                vrmManager.rootMesh.rotationQuaternion !=
+                new Quaternion(0, 0, 0, 1)
+            ) {
+            }
             vrmManager.rootMesh.rotationQuaternion = Quaternion.FromEulerAngles(
                 0,
                 0,
                 0
             );
-            console.log(vrmManager.rootMesh.rotationQuaternion);
         }
     });
 
